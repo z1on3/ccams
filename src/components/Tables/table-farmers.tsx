@@ -4,6 +4,8 @@ import { Farmer } from "@/types/farmer";
 import { Barangays } from "@/components/constants/barangays";
 import SearchFarmer from "../Dashboard/search-farmer"; // Assuming you have a search input component
 import DataTable from "react-data-table-component";
+import ButtonDefault from "../Buttons/ButtonDefault";
+import { Plus } from "lucide-react";
 
 // Function to get a random barangay
 const getRandomBarangay = () => {
@@ -14,7 +16,7 @@ const getRandomBarangay = () => {
 const farmerData: Farmer[] = [
   {
     image: "/images/user/user-01.png",
-    name: "Juan Dela Cruz",
+    name: "Maria Santos",
     age: 45,
     birthday: new Date(1979, 4, 12),
     phone: 1234567890,
@@ -32,7 +34,7 @@ const farmerData: Farmer[] = [
   },
   {
     image: "/images/user/user-02.png",
-    name: "Maria Santos",
+    name: "Juan Dela Cruz",
     age: 50,
     birthday: new Date(1974, 6, 22),
     phone: 9876543210,
@@ -68,7 +70,7 @@ const farmerData: Farmer[] = [
   },
   {
     image: "/images/user/user-04.png",
-    name: "Josefa Reyes",
+    name: "Jose Reyes",
     age: 40,
     birthday: new Date(1984, 11, 3),
     phone: 4321098765,
@@ -153,6 +155,15 @@ const FarmersTable = () => {
           Farmers List
         </h4>
         <ul className="flex justify-end gap-2 2xsm:gap-4 w-1/2">
+          <ButtonDefault 
+          label="Add Farmer" 
+          link="#addFarmer" 
+          customClasses="rounded-full py-3 pl-5 pr-5 bg-green-light text-white focus:border-primary focus:outline-none dark:bg-green dark:text-white dark:focus:border-primary"
+           >
+
+            <Plus/>
+           </ButtonDefault>
+
           <input
             type="text"
             placeholder="Search..."
@@ -162,17 +173,54 @@ const FarmersTable = () => {
           />
         </ul>
       </div>
-      <div className="px-4 py-6 md:px-6 xl:px-9 flex flex-col items-stretch ">
-        <DataTable
-          columns={columns}
-          data={filteredFarmers}
-          pagination
-          highlightOnHover
-          striped
-          responsive
-          theme=""
-          className="rounded-[10px] shadow-1 dark:bg-gray-dark dark:shadow-card text-body-2xlg font-bold text-dark dark:text-white "
-        />
+      <div className="px-4 pb-6 md:px-6 xl:px-9 flex flex-col items-stretch ">
+      <DataTable
+  columns={columns}
+  data={filteredFarmers}
+  pagination
+  highlightOnHover
+  striped
+  responsive
+  theme=""
+  customStyles={{
+    rows: {
+      style: {
+        fontWeight: '500', // equivalent to Tailwind's 'font-bold'
+        fontSize: '18px', // approximately equivalent to Tailwind's 'text-body-2xlg'
+        color: 'black', // equivalent to Tailwind's 'text-dark'
+        backgroundColor: '#F9FAFB', // default light background
+      },
+      highlightOnHoverStyle: {
+        backgroundColor: '#E5E7EB', // hover effect equivalent to Tailwind
+      },
+    },
+    headCells: {
+      style: {
+        backgroundColor: '#fff', // dark background equivalent to 'dark:bg-gray-dark'
+        color: '#000', // text color for dark mode equivalent to 'dark:text-white'
+        paddingLeft: '10px',
+        paddingRight: '10px',
+        fontWeight: '700',
+        fontSize: '20px',
+        
+      },
+    },
+    cells: {
+      style: {
+        paddingLeft: '10px',
+        paddingRight: '10px',
+        padding: '10px'
+      },
+    },
+    pagination: {
+      style: {
+        
+      },
+    },
+  }}
+  className="rounded-[10px]" // Tailwind class can still be used here for border-radius
+/>
+
       </div>
 
 

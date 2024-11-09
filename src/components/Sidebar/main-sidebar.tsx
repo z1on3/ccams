@@ -49,27 +49,28 @@ const MainSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       >
         {/* <!-- SIDEBAR HEADER --> */}
         <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5 xl:py-10">
-          <Link href="/">
+          <Link href="/" className="flex items-center justify-center gap-2 w-full">
             <Image
-              width={176}
-              height={32}
-              src={"/images/logo/logo-dark.svg"}
+              width={60}
+              height={60}
+              src={"/images/logo/logo-circle.png"}
               alt="Logo"
               priority
               className="dark:hidden"
               style={{ width: "auto", height: "auto" }}
             />
             <Image
-              width={176}
-              height={32}
-              src={"/images/logo/logo.svg"}
+              width={60}
+              height={60}
+              src={"/images/logo/logo-circle.png"}
               alt="Logo"
               priority
               className="hidden dark:block"
               style={{ width: "auto", height: "auto" }}
             />
+            <h2 className="font-bold text-dark text-body-2xlg dark:text-white">CCAMS ADMIN</h2>
           </Link>
-
+          
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="block lg:hidden"
@@ -107,6 +108,7 @@ const MainSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                       item={menuItem}
                       pageName={pageName}
                       setPageName={setPageName}
+                      
                     />
                   ))}
                 </ul>
