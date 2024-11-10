@@ -4,7 +4,7 @@ const DarkModeSwitcher = () => {
   const [colorMode, setColorMode] = useColorMode();
 
   return (
-    <li>
+    <li className="list-none">
       <div
         onClick={() => {
           if (typeof setColorMode === "function") {

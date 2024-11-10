@@ -3,27 +3,40 @@ import Link from "next/link";
 
 interface ButtonPropTypes {
   label: string;
-  link: string;
-  customClasses: string;
+  link?: string;
+  customClasses?: string;
   children?: React.ReactNode;
+  onClick?: () => void;
 }
 
-const ButtonDefault = ({
+const ButtonDefault: React.FC<ButtonPropTypes> = ({
   label,
   link,
-  customClasses,
+  customClasses = "",
   children,
-}: ButtonPropTypes) => {
-  return (
-    <>
+  onClick,
+}) => {
+  // Conditional rendering: if `link` is provided, use `<Link>`, otherwise use `<button>`
+  if (link) {
+    return (
       <Link
-        className={`inline-flex items-center justify-center gap-2.5 text-center font-medium hover:bg-opacity-90 ${customClasses}`}
         href={link}
+        className={`inline-flex items-center justify-center gap-2.5 text-center font-medium hover:bg-opacity-90 ${customClasses}`}
       >
         {children}
         {label}
       </Link>
-    </>
+    );
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center justify-center gap-2.5 text-center font-medium hover:bg-opacity-90 ${customClasses}`}
+    >
+      {children}
+      {label}
+    </button>
   );
 };
 

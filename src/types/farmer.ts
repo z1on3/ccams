@@ -1,6 +1,7 @@
 import { Crops } from "./crops";
 
 export type Farmer = {
+    id: string,
     image: string;
     name: string;
     age: number;

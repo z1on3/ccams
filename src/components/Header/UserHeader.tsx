@@ -4,8 +4,9 @@ import DropdownNotification from "./DropdownNotification";
 import DropdownUser from "./DropdownUser";
 import Image from "next/image";
 import SearchForm from "@/components/Header/SearchForm";
+import UserMenu from "./UserMenu";
 
-const Header = (props: {
+const UserHeader = (props: {
   sidebarOpen: string | boolean | undefined;
   setSidebarOpen: (arg0: boolean) => void;
 }) => {
@@ -89,7 +90,7 @@ const Header = (props: {
           </ul>
 
           {/* <!-- User Area --> */}
-          <DropdownUser />
+          <UserMenu />
           {/* <!-- User Area --> */}
         </div>
       </div>
@@ -97,4 +98,4 @@ const Header = (props: {
   );
 };
 
-export default Header;
+export default UserHeader;
