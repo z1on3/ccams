@@ -1,6 +1,15 @@
 ## Installation
 
-1. Download/fork/clone the repo and Once you're in the correct directory, it's time to install all the necessary dependencies. You can do this by typing the following command:
+1. Download/fork/clone the repo and move in the correct directory.
+```
+git clone https://github.com/z1on3/ccams
+```
+
+```
+cd ccams
+```
+
+It's time to install all the necessary dependencies. You can do this by typing the following command:
 
 ```
 npm install
