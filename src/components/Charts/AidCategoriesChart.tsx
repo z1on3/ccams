@@ -262,6 +262,7 @@ const AidCategoriesChart = () => {
                             type="bar"
                             height={350}
                             width="100%"
+                            style={{ width: '100%' }}
                         />
                     )}
                 </div>

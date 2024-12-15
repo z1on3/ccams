@@ -7,7 +7,7 @@ import Image from "next/image";
 import SidebarItem from "@/components/Sidebar/SidebarItem";
 import ClickOutside from "@/components/ClickOutside";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import { Gauge, Tractor, Package } from "lucide-react";
+import { Gauge, Tractor, Package, Settings } from "lucide-react";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -32,6 +32,11 @@ const menuGroups = [
         icon: (<Package/>),
         label: "Aid Management",
         route: "/dashboard/aid-management",
+      },
+      {
+        icon: (<Settings/>),
+        label: "Settings",
+        route: "/dashboard/settings",
       },
     ],
   },
