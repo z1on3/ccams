@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Camera, Edit, Pencil, X, Trash2, Calendar, Phone, MapPin, Coins, User } from "lucide-react";
+import { Camera, Edit, Pencil, X, Trash2, Calendar, Phone, MapPin, Coins, User, IdCard, Cake, Printer } from "lucide-react";
 import { Farmer } from "@/types/farmer";
 import { usePathname } from "next/navigation";
 import AddFarmerModal from "../Modals/AddFarmer";
@@ -149,6 +149,126 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
     );
   };
 
+  const handlePrint = () => {
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    // Create the ID card HTML
+    const idCardHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Farmer ID Card - ${farmer.name}</title>
+          <style>
+            @media print {
+              body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+              }
+              .id-card {
+                width: 3.375in;
+                height: 2.125in;
+                padding: 20px;
+                border: 1px solid #000;
+                margin: 20px auto;
+                position: relative;
+                background: white;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #000;
+                padding-bottom: 10px;
+              }
+              .header h1 {
+                margin: 0;
+                font-size: 14px;
+                font-weight: bold;
+              }
+              .header h2 {
+                margin: 5px 0;
+                font-size: 12px;
+              }
+              .content {
+                display: flex;
+                gap: 15px;
+              }
+              .photo {
+                width: 80px;
+                height: 80px;
+                border: 1px solid #000;
+              }
+              .details {
+                flex: 1;
+                font-size: 10px;
+              }
+              .details p {
+                margin: 3px 0;
+              }
+              .footer {
+                position: absolute;
+                bottom: 10px;
+                left: 20px;
+                right: 20px;
+                text-align: center;
+                font-size: 6px;
+              }
+              .qr-code {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                width: 40px;
+                height: 40px;
+                border: 1px solid #000;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="id-card">
+            <div class="header">
+              <h1>FARMER IDENTIFICATION CARD</h1>
+              <h2>Municipality of San Luis</h2>
+            </div>
+            <div class="content">
+              <img src="${farmer.image || '/images/user/default-user.png'}" class="photo" alt="Farmer Photo">
+              <div class="details">
+                <p><strong>ID:</strong> ${farmer.id}</p>
+                <p><strong>Name:</strong> ${farmer.name}</p>
+                <p><strong>Age:</strong> ${farmer.age} years old</p>
+                <p><strong>Gender:</strong> ${
+                  {
+                    M: 'Male',
+                    F: 'Female',
+                    Other: 'LGBTQ+',
+                  }[farmer.gender as 'M' | 'F' | 'Other'] || 'Unknown'
+                }</p>
+                <p><strong>Contact:</strong> ${farmer.phone || 'Not provided'}</p>
+                <p><strong>Barangay:</strong> ${farmer.farm_location}</p>
+              </div>
+            </div>
+            <div class="footer">
+              This card is the property of the Municipality of San Luis. If found, please return to the Municipal Hall.
+            </div>
+            
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Write the HTML to the new window and print
+    printWindow.document.write(idCardHtml);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.onafterprint = () => {
+        printWindow.close();
+      };
+    };
+  };
+
   return (
     <div className="overflow-hidden rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
       <div className="relative z-20 h-35 md:h-65">
@@ -180,30 +300,39 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
 
         </div>
 
-        <h4 className="mt-4 text-3xl text-black dark:text-white font-bold font-bold ">
+        <h4 className="mt-2 text-3xl text-black dark:text-white font-bold font-bold ">
           {farmer.name}
         </h4>
-        {/* Edit Button */}
-        <div className="w-full flex justify-center mt-4 gap-2">
+        <h6 className="text-lg text-gray-500 dark:text-gray-400">({farmer.age} years old)</h6>
+        
+        {/* Edit and Print Buttons */}
+        <div className="mt-6 w-full flex justify-center gap-2">
           <button
             onClick={() => setIsEditModalOpen(true)}
-            className="w-fit flex cursor-pointer items-center justify-center gap-2 rounded-[3px] bg-primary px-[15px] py-[5px] text-body-sm font-medium text-white hover:bg-opacity-90"
+            className="w-fit flex cursor-pointer items-center justify-center gap-2 rounded-[3px] bg-primary dark:bg-primary-dark px-4 py-2 text-body-sm font-medium text-white hover:bg-opacity-90"
           >
-            <span>
-              <Pencil />
-            </span>
+            <Pencil size={20}/>
             <span>Edit Info</span>
+          </button>
+          <button
+            onClick={handlePrint}
+            className="w-fit flex cursor-pointer items-center justify-center gap-2 rounded-[3px] bg-blue-light dark:bg-blue-dark px-4 py-2 text-body-sm font-medium text-white hover:bg-opacity-90"
+          >
+            <Printer size={20}/>
+            <span>Print ID</span>
           </button>
         </div>
 
         {/* Basic Information */}
-        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
           <div className="flex items-center justify-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
             <span className="text-sm text-body-light dark:text-body-dark">
-              {formatDate(farmer.birthday)} ({farmer.age} years old)
+              {formatDate(farmer.birthday)} 
             </span>
           </div>
+
+          
           <div className="flex items-center justify-center gap-2">
             <User className="h-5 w-5 text-primary" />
             <span className="text-sm text-body-light dark:text-body-dark">
@@ -224,6 +353,12 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
             <MapPin className="h-5 w-5 text-primary" />
             <span className="text-sm text-body-light dark:text-body-dark">
               {farmer.farm_location}
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <IdCard className="h-5 w-5 text-primary" />
+            <span className="text-sm text-body-light dark:text-body-dark">
+              {farmer.id}
             </span>
           </div>
         </div>
