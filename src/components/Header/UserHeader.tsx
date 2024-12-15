@@ -63,6 +63,7 @@ const UserHeader = (props: {
               height={32}
               src={"/images/logo/logo-icon.svg"}
               alt="Logo"
+              
             />
           </Link>
         </div>

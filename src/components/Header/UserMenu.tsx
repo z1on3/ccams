@@ -88,8 +88,9 @@ const UserMenu = () => {
             height={112}
             src={farmer.image || "/images/user/user-01.png"}
             style={{
-              width: "auto",
-              height: "auto",
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
             }}
             alt="User"
             className="overflow-hidden rounded-full"
@@ -128,8 +129,9 @@ const UserMenu = () => {
                 height={112}
                 src={farmer.image || "/images/user/user-01.png"}
                 style={{
-                  width: "auto",
-                  height: "auto",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
                 }}
                 alt="User"
                 className="overflow-hidden rounded-full"
