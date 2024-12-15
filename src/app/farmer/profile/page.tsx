@@ -27,11 +27,12 @@ const FarmerProfilePage = () => {
           }
           throw new Error('Failed to fetch profile');
         }
-
+        console.log(response);
         const data = await response.json();
         setFarmer(data.farmer);
       } catch (error) {
         console.error('Error fetching farmer profile:', error);
+        console.log(error);
         toast.error('Failed to load profile');
       } finally {
         setLoading(false);

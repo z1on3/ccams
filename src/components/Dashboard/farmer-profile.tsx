@@ -1,25 +1,157 @@
-"use client"; // Ensure it's client-side rendered in Next.js
+"use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Camera, Edit, Pencil } from "lucide-react"; // Importing icons from lucide-react
-import { Farmer } from "@/types/farmer"; // Assuming the Farmer type is defined correctly
+import { Camera, Edit, Pencil, X, Trash2, Calendar, Phone, MapPin, Coins, User } from "lucide-react";
+import { Farmer } from "@/types/farmer";
 import { usePathname } from "next/navigation";
+import AddFarmerModal from "../Modals/AddFarmer";
+import FarmPhotosModal from "../Modals/FarmPhotosModal";
+import { toast } from "react-toastify";
+import EditFarmerModal from "../Modals/EditFarmerModal";
 
 interface FarmerProfileProps {
-  farmer: Farmer; // Accept the farmer object as a prop
+  farmer: Farmer;
+}
+
+interface FarmPhoto {
+  id: number;
+  photo_url: string;
+  created_at: string;
+}
+
+interface AidReceived {
+  id: number;
+  aid_program_id: number;
+  farmer_id: number;
+  quantity_received: string;
+  distribution_date: string;
+  status: string;
+  remarks: string;
+  created_at: string;
+  program_name: string;
+  program_category: string;
+  resource_allocation: number;
+  farmer_name: string;
+  farm_location: string;
 }
 
 const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
   const pathname = usePathname();
-  const { image, name, farm_location, crops, income } = farmer;
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [farmPhotos, setFarmPhotos] = useState<FarmPhoto[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedPhoto, setSelectedPhoto] = useState<FarmPhoto | null>(null);
+  const [aidReceived, setAidReceived] = useState<AidReceived[]>([]);
+  const [isLoadingAid, setIsLoadingAid] = useState(true);
+
+  const fetchFarmPhotos = async () => {
+    try {
+      const response = await fetch(`/api/farmers/${farmer.id}/photos`);
+      if (!response.ok) throw new Error('Failed to fetch photos');
+      const data = await response.json();
+      setFarmPhotos(data.photos);
+    } catch (error) {
+      console.error('Error fetching farm photos:', error);
+      toast.error('Failed to load farm photos');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchAidReceived = async () => {
+    try {
+      const response = await fetch('/api/farmer/aid-records');
+      if (!response.ok) throw new Error('Failed to fetch aid records');
+      const data = await response.json();
+      setAidReceived(data.records || []);
+    } catch (error) {
+      console.error('Error fetching aid records:', error);
+      toast.error('Failed to load aid records');
+      setAidReceived([]);
+    } finally {
+      setIsLoadingAid(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFarmPhotos();
+    fetchAidReceived();
+  }, [farmer.id]);
+
+  const handleDeletePhoto = async (photoId: number) => {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+
+    try {
+      const response = await fetch(`/api/farmers/${farmer.id}/photos`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ photoId }),
+      });
+
+      if (!response.ok) throw new Error('Failed to delete photo');
+
+      toast.success('Photo deleted successfully');
+      fetchFarmPhotos();
+      setSelectedPhoto(null);
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      toast.error('Failed to delete photo');
+    }
+  };
+
+  // Format date to readable string
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   // Ensure image path has leading slash
-  const farmerImage = image?.startsWith('/') ? image : '/images/user/default-user.png';
+  const farmerImage = farmer.image?.startsWith('/') ? farmer.image : '/images/user/default-user.png';
+
+  // Lightbox component
+  const Lightbox = () => {
+    if (!selectedPhoto) return null;
+
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-90">
+        <div className="relative max-h-[90vh] max-w-[90vw]">
+          <button
+            onClick={() => setSelectedPhoto(null)}
+            className="absolute -right-12 -top-12 text-white hover:text-gray-300"
+          >
+            <X size={24} />
+          </button>
+          <div className="relative">
+            <Image
+              src={selectedPhoto.photo_url}
+              alt="Farm photo"
+              width={1200}
+              height={800}
+              className="max-h-[85vh] w-auto rounded-lg object-contain"
+            />
+            <button
+              onClick={() => handleDeletePhoto(selectedPhoto.id)}
+              className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+            >
+              <Trash2 size={20} />
+              <span>Delete Photo</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="overflow-hidden rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
-      <div className="relative z-20 h-35 md:h-65" >
+      <div className="relative z-20 h-35 md:h-65">
         <Image
           src="/images/cover/cover-01.png"
           alt="profile cover"
@@ -31,31 +163,12 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
             height: "100%",
           }}
         />
-        <div className="absolute bottom-1 right-1 z-10 xsm:bottom-4 xsm:right-4">
-          <label
-            htmlFor="cover"
-            className="flex cursor-pointer items-center justify-center gap-2 rounded-[3px] bg-primary px-[15px] py-[5px] text-body-sm font-medium text-white hover:bg-opacity-90"
-          >
-            <input
-              type="file"
-              name="coverPhoto"
-              id="coverPhoto"
-              className="sr-only"
-              accept="image/png, image/jpg, image/jpeg"
-            />
-            <span>
-              <Camera className="text-white" />
-            </span>
-            <span>Edit</span>
-          </label>
-        </div>
       </div>
       <div className="px-10 pb-6 text-center lg:pb-8 xl:pb-11.5">
-        
         <div className="relative z-30 mx-auto -mt-14 h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-cover bg-center">
           <Image
             src={farmerImage}
-            alt={name}
+            alt={farmer.name}
             className="object-cover"
             width={120}
             height={120}
@@ -64,109 +177,237 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
               height: "100%",
             }}
           />
+
         </div>
-       
-        <h4 className="mt-4 text-2xl font-bold text-body-dark dark:text-body-light">{name}</h4>
-        <p className="mt-1 text-base font-normal text-body-sm dark:text-body-light">
-          {farm_location}
-        </p>
-        <p className="mt-2 text-sm text-body-light dark:text-body-dark">
-          Income: PHP {income.toLocaleString()}
-        </p>
-        <div className="mt-4 flex flex-col items-center gap-2">
-  {/* Wet Season Crops */}
-  <div className="w-full max-w-lg">
-    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Wet Season Crops</h3>
-    <div className="flex justify-center flex-wrap gap-2">
-      {crops
-        .filter((crop) => crop.season.toLowerCase() === "wet")
-        .map((crop, index) => (
-          <span
-            key={index}
-            className="rounded-md bg-blue-200 px-2 py-1 text-sm font-medium text-blue-800 dark:bg-blue-700 dark:text-blue-100"
-          >
-            {crop.name}
-          </span>
-        ))}
-    </div>
-  </div>
 
-  {/* Dry Season Crops */}
-  <div className="w-full max-w-lg">
-    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Dry Season Crops</h3>
-    <div className="flex justify-center flex-wrap gap-2">
-      {crops
-        .filter((crop) => crop.season.toLowerCase() === "dry")
-        .map((crop, index) => (
-          <span
-            key={index}
-            className="rounded-md bg-yellow-200 px-2 py-1 text-sm font-medium text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100"
-          >
-            {crop.name}
-          </span>
-        ))}
-    </div>
-  </div>
-</div>
-
-
-        <div className="w-full flex justify-center mt-4">
-          <label
-            htmlFor="cover"
+        <h4 className="mt-4 text-3xl text-black dark:text-white font-bold font-bold ">
+          {farmer.name}
+        </h4>
+        {/* Edit Button */}
+        <div className="w-full flex justify-center mt-4 gap-2">
+          <button
+            onClick={() => setIsEditModalOpen(true)}
             className="w-fit flex cursor-pointer items-center justify-center gap-2 rounded-[3px] bg-primary px-[15px] py-[5px] text-body-sm font-medium text-white hover:bg-opacity-90"
           >
-            <input
-              type="file"
-              name="coverPhoto"
-              id="coverPhoto"
-              className="sr-only"
-              accept="image/png, image/jpg, image/jpeg"
-            />
             <span>
-              <Pencil/>
+              <Pencil />
             </span>
             <span>Edit Info</span>
-          </label>
+          </button>
         </div>
 
-        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <h2 className="text-3xl font-bold text-left mb-6">Farm Photos</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-
-      
-        <div className="relative">
-        <img
-            src="https://via.placeholder.com/300?text=Add%20Photo"
-            alt="Placeholder with plus sign"
-
-            width={300}
-            height={300}
-            className="w-full h-full object-cover rounded-lg shadow-lg"
-          />
-          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity duration-300">
-            <span className="text-white font-bold text-xl">Upload Image</span>
+        {/* Basic Information */}
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="flex items-center justify-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            <span className="text-sm text-body-light dark:text-body-dark">
+              {formatDate(farmer.birthday)} ({farmer.age} years old)
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <User className="h-5 w-5 text-primary" />
+            <span className="text-sm text-body-light dark:text-body-dark">
+              {{
+                M: 'Male',
+                F: 'Female',
+                Other: 'LGBTQ+',
+              }[farmer.gender as 'M' | 'F' | 'Other'] || 'Unknown'}
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <Phone className="h-5 w-5 text-primary" />
+            <span className="text-sm text-body-light dark:text-body-dark">
+              {farmer.phone || 'Not provided'}
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <MapPin className="h-5 w-5 text-primary" />
+            <span className="text-sm text-body-light dark:text-body-dark">
+              {farmer.farm_location}
+            </span>
           </div>
         </div>
-      
-        {Array.from({ length: Math.floor(Math.random() * (16 - 4 + 1)) + 4 }).map((_, index) => (
-          <div key={index} className="relative">
-                        <img
-              src={`https://via.placeholder.com/300?text=Image+${index + 1}`}
-              alt={`Placeholder Image ${index + 1}`}
 
-              width={300}
-              height={300}
-              className="w-full h-full object-cover rounded-lg shadow-lg"
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity duration-300">
-              <span className="text-white font-bold text-xl">View</span>
+        {/* Farm Information */}
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+            <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Land Size</h5>
+            <p className="text-lg font-bold text-primary">{farmer.land_size}</p>
+          </div>
+          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+            <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Farm Owner</h5>
+            <p className="text-lg font-bold text-primary">{farmer.farm_owner ? 'Yes' : 'No'}</p>
+          </div>
+          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+            <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Annual Income</h5>
+            <p className="text-lg font-bold text-primary">₱{parseInt(farmer.income.toString()).toLocaleString('en-US')}</p>
+          </div>
+        </div>
+
+        {/* Crops Section */}
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Wet Season Crops Card */}
+          <div className="rounded-lg bg-gray-50 p-6 dark:bg-gray-800">
+            <h5 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
+              Wet Season Crops
+            </h5>
+            <div className="flex flex-wrap gap-2">
+              {farmer.crops
+                .filter((crop) => crop.season.toLowerCase() === "wet")
+                .map((crop, index) => (
+                  <span
+                    key={index}
+                    className="rounded-md bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-800 dark:bg-blue-700 dark:text-blue-100"
+                  >
+                    {crop.name}
+                  </span>
+                ))}
+              {farmer.crops.filter((crop) => crop.season.toLowerCase() === "wet").length === 0 && (
+                <span className="text-gray-500 dark:text-gray-400">No wet season crops</span>
+              )}
             </div>
           </div>
-        ))}
+
+          {/* Dry Season Crops Card */}
+          <div className="rounded-lg bg-gray-50 p-6 dark:bg-gray-800">
+            <h5 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
+              Dry Season Crops
+            </h5>
+            <div className="flex flex-wrap gap-2">
+              {farmer.crops
+                .filter((crop) => crop.season.toLowerCase() === "dry")
+                .map((crop, index) => (
+                  <span
+                    key={index}
+                    className="rounded-md bg-yellow-100 px-3 py-1.5 text-sm font-medium text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100"
+                  >
+                    {crop.name}
+                  </span>
+                ))}
+              {farmer.crops.filter((crop) => crop.season.toLowerCase() === "dry").length === 0 && (
+                <span className="text-gray-500 dark:text-gray-400">No dry season crops</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+
+
+
+
+        {/* Farm Photos Section */}
+
+        <div className="mt-6 flex justify-between items-center mb-6">
+          <h2 className="text-3xl text-black dark:text-white font-bold text-left">Farm Photos</h2>
+          <button
+            onClick={() => setIsPhotoModalOpen(true)}
+            className="flex items-center gap-2 rounded bg-primary px-4 py-2 text-white hover:bg-opacity-90"
+          >
+            <Camera size={20} />
+            <span>Add Photos</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="bg-gray-200 dark:bg-gray-700 rounded-lg aspect-square animate-pulse"
+              />
+            ))
+          ) : farmPhotos.length > 0 ? (
+            farmPhotos.map((photo) => (
+              <div
+                key={photo.id}
+                className="relative cursor-pointer group"
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                <Image
+                  src={photo.photo_url}
+                  alt="Farm photo"
+                  width={300}
+                  height={300}
+                  className="w-full aspect-square object-cover rounded-lg shadow-lg"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity duration-300">
+                  <span className="text-white font-medium">View Photo</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
+              No farm photos uploaded yet
+            </div>
+          )}
+        </div>
+
+
+        {/* Aid Received Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-left">Aid Received</h2>
+          {isLoadingAid ? (
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (aidReceived && aidReceived.length > 0) ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-800">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Program Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Allocation</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Distribution Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                  {aidReceived.map((aid) => (
+                    <tr key={aid.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{aid.program_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{aid.program_category}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                        {aid.program_category === 'Financial Assistance'
+                          ? `₱${parseInt(aid.quantity_received.substring(1) as unknown as string).toLocaleString()}`
+                          : `${aid.quantity_received}`}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{formatDate(aid.distribution_date)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          ${aid.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                            aid.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'}`}>
+                          {aid.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-center text-gray-500 dark:text-gray-400">No aid records found</p>
+          )}
+        </div>
       </div>
-    </div>
-      </div>
-      
+
+      {selectedPhoto && <Lightbox />}
+
+      {isEditModalOpen && (
+        <EditFarmerModal
+          farmer={farmer}
+          onClose={() => setIsEditModalOpen(false)}
+        />
+      )}
+
+      {isPhotoModalOpen && (
+        <FarmPhotosModal
+          farmerId={farmer.id}
+          onClose={() => setIsPhotoModalOpen(false)}
+          onPhotosUpdated={fetchFarmPhotos}
+        />
+      )}
     </div>
   );
 };

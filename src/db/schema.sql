@@ -35,6 +35,15 @@ CREATE TABLE IF NOT EXISTS crops (
     FOREIGN KEY (farmer_id) REFERENCES farmers(id)
 );
 
+-- Create farm_photos table
+CREATE TABLE IF NOT EXISTS farm_photos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    farmer_id VARCHAR(36) NOT NULL,
+    photo_url VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (farmer_id) REFERENCES farmers(id) ON DELETE CASCADE
+);
+
 -- Create aid_allocations table
 CREATE TABLE IF NOT EXISTS aid_allocations (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -68,3 +77,4 @@ CREATE INDEX idx_farmer_location ON farmers(farm_location);
 CREATE INDEX idx_aid_allocation_status ON aid_allocations(status);
 CREATE INDEX idx_aid_allocation_date ON aid_allocations(distribution_date);
 CREATE INDEX idx_username ON admin_users(username);
+CREATE INDEX idx_farm_photos_farmer ON farm_photos(farmer_id);

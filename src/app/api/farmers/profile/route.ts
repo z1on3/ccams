@@ -48,15 +48,11 @@ export async function GET(request: Request) {
     connection = await pool.getConnection();
     const [farmers] = await connection.query<FarmerRow[]>(
       `SELECT f.*, 
-        (SELECT JSON_ARRAYAGG(
-          JSON_OBJECT('name', c.name, 'season', fc.season)
-        )
-        FROM farmer_crops fc
-        JOIN crops c ON fc.crop_id = c.id
-        WHERE fc.farmer_id = f.id
-      ) as crops
-      FROM farmers f
-      WHERE f.id = ? AND f.active = true`,
+        GROUP_CONCAT(CONCAT_WS(':', fc.name, fc.season)) as crops
+        FROM farmers f
+        LEFT JOIN crops fc ON fc.farmer_id = f.id
+        WHERE f.id = ? AND f.active = true
+        GROUP BY f.id`,
       [farmerId]
     );
 
@@ -66,8 +62,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Farmer not found' }, { status: 404 });
     }
 
-    // Parse crops JSON string
-    const crops = farmer.crops ? JSON.parse(farmer.crops as string) : [];
+    // Parse crops from GROUP_CONCAT result
+    const crops = farmer.crops ? farmer.crops.split(',').map(crop => {
+      const [name, season] = crop.split(':');
+      return { name, season };
+    }) : [];
 
     // Format the response
     const formattedFarmer = {
