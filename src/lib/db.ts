@@ -6,7 +6,7 @@ const pool = mysql.createPool({
   password: "",
   database: "ccams_db",
   waitForConnections: true,
-  connectionLimit: 5,
+  connectionLimit: 20,
   maxIdle: 5,
   idleTimeout: 60000,
   queueLimit: 0,

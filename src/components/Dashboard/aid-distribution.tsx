@@ -5,6 +5,7 @@ import Image from 'next/image';
 import ButtonDefault from '../Buttons/ButtonDefault';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
+import { ChevronUpIcon, ChevronDownIcon } from 'lucide-react';
 
 interface Farmer {
   id: string;
@@ -37,6 +38,8 @@ const AidDistribution = ({ programId }: { programId: string }) => {
   const [selectedFarmers, setSelectedFarmers] = useState<Set<string>>(new Set());
   const [farmerQuantities, setFarmerQuantities] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<keyof Farmer>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,9 +76,88 @@ const AidDistribution = ({ programId }: { programId: string }) => {
     fetchData();
   }, [programId]);
 
+  const handleSort = (field: keyof Farmer) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
   const filteredFarmers = farmers.filter(farmer =>
     farmer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     farmer.farm_location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Sort farmers
+  const sortedFarmers = [...filteredFarmers].sort((a, b) => {
+    if (sortField === 'crops') {
+      const aCrops = a.crops.map(c => c.name).join(', ');
+      const bCrops = b.crops.map(c => c.name).join(', ');
+      return sortDirection === 'asc'
+        ? aCrops.localeCompare(bCrops)
+        : bCrops.localeCompare(aCrops);
+    }
+
+    if (sortField === 'income') {
+      return sortDirection === 'asc'
+        ? a.income - b.income
+        : b.income - a.income;
+    }
+
+    if (sortField === 'land_size') {
+      // Convert land size to square meters for comparison
+      const convertToSqm = (size: string): number => {
+        const value = parseFloat(size.replace(/[^\d.]/g, '')) || 0;
+        const unit = size.toLowerCase();
+        
+        if (unit.includes('hectare') || unit.includes('ha')) {
+          return value * 10000; // 1 hectare = 10000 sqm
+        } else if (unit.includes('acre')) {
+          return value * 4046.86; // 1 acre = 4046.86 sqm
+        } else if (unit.includes('sqm') || unit.includes('sq m') || unit.includes('m2')) {
+          return value; // already in sqm
+        } else {
+          return value; // default to original value if unit not recognized
+        }
+      };
+
+      const aSize = convertToSqm(a.land_size);
+      const bSize = convertToSqm(b.land_size);
+      
+      return sortDirection === 'asc'
+        ? aSize - bSize
+        : bSize - aSize;
+    }
+
+    const aValue = a[sortField];
+    const bValue = b[sortField];
+    
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortDirection === 'asc'
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+    
+    return 0;
+  });
+
+  const SortIcon = ({ field }: { field: keyof Farmer }) => (
+    <span className="inline-flex ml-1">
+      {sortField === field ? (
+        sortDirection === 'asc' ? (
+          <ChevronUpIcon className="w-4 h-4" />
+        ) : (
+          <ChevronDownIcon className="w-4 h-4" />
+        )
+      ) : (
+        <div className="w-4 h-4 flex flex-col opacity-30">
+          <ChevronUpIcon className="w-4 h-2" />
+          <ChevronDownIcon className="w-4 h-2" />
+        </div>
+      )}
+    </span>
   );
 
   const toggleFarmerSelection = (farmerId: string) => {
@@ -206,20 +288,35 @@ const AidDistribution = ({ programId }: { programId: string }) => {
                   className="form-checkbox h-5 w-5 text-green-500"
                 />
               </th>
-              <th className="min-w-[250px] py-4 px-4 font-medium text-black dark:text-white">
-                Farmer Name
+              <th 
+                className="min-w-[250px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
+                onClick={() => handleSort('name')}
+              >
+                Farmer Name <SortIcon field="name" />
               </th>
-              <th className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white">
-                Farm Location
+              <th 
+                className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
+                onClick={() => handleSort('farm_location')}
+              >
+                Farm Location <SortIcon field="farm_location" />
               </th>
-              <th className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white">
-                Land Size
+              <th 
+                className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
+                onClick={() => handleSort('land_size')}
+              >
+                Land Size <SortIcon field="land_size" />
               </th>
-              <th className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white">
-                Income
+              <th 
+                className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
+                onClick={() => handleSort('income')}
+              >
+                Income <SortIcon field="income" />
               </th>
-              <th className="min-w-[200px] py-4 px-4 font-medium text-black dark:text-white">
-                Crops
+              <th 
+                className="min-w-[200px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
+                onClick={() => handleSort('crops')}
+              >
+                Crops <SortIcon field="crops" />
               </th>
               <th className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white">
                 Quantity
@@ -227,8 +324,8 @@ const AidDistribution = ({ programId }: { programId: string }) => {
             </tr>
           </thead>
           <tbody>
-            {filteredFarmers.length > 0 ? (
-              filteredFarmers.map((farmer, index) => (
+            {sortedFarmers.length > 0 ? (
+              sortedFarmers.map((farmer, index) => (
                 <tr 
                   key={farmer.id} 
                   className={`${
@@ -262,7 +359,7 @@ const AidDistribution = ({ programId }: { programId: string }) => {
                     {farmer.land_size}
                   </td>
                   <td className="py-5 px-4 dark:border-strokedark">
-                    ₱{farmer.income.toLocaleString()}
+                    ₱{parseInt(farmer.income.toString()).toLocaleString('en-US')}
                   </td>
                   <td className="py-5 px-4 dark:border-strokedark">
                     {farmer.crops.map(crop => crop.name).join(", ")}
