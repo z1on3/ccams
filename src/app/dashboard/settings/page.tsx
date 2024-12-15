@@ -99,17 +99,17 @@ const SettingsPage = () => {
               <div className="overflow-x-auto">
                 <table className="w-full table-auto">
                   <thead>
-                    <tr className="bg-gray-2 text-left dark:bg-gray-dark">
+                    <tr className="bg-gray text-left dark:bg-gray-dark">
                       <th className="py-4 px-4 font-medium text-black dark:text-white">
                         Username
                       </th>
                       <th className="py-4 px-4 font-medium text-black dark:text-white">
                         Name
                       </th>
-                      <th className="py-4 px-4 font-medium text-black dark:text-white">
+                      <th className="py-4 px-4 font-medium text-center text-black dark:text-white">
                         Role
                       </th>
-                      <th className="py-4 px-4 font-medium text-black dark:text-white">
+                      <th className="py-4 px-4 font-medium text-center text-black dark:text-white">
                         Actions
                       </th>
                     </tr>
@@ -126,7 +126,7 @@ const SettingsPage = () => {
                         <td className="py-4 px-4 dark:border-strokedark">
                           {user.name}
                         </td>
-                        <td className="py-4 px-4 dark:border-strokedark">
+                        <td className="py-4 px-4 dark:border-strokedark text-center">
                           <select
                             value={user.role}
                             onChange={(e) => handleRoleChange(user.id, e.target.value as 'admin' | 'staff')}
@@ -136,7 +136,7 @@ const SettingsPage = () => {
                             <option value="admin">Admin</option>
                           </select>
                         </td>
-                        <td className="py-4 px-4 ">
+                        <td className="py-4 px-4 flex justify-center">
                           <ButtonDefault
                             label="Change Password"
                             onClick={() => openChangePasswordModal(user)}

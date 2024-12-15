@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import Link from "next/link";
 
 export default function FarmerLoginForm() {
   const router = useRouter();
@@ -127,6 +128,7 @@ export default function FarmerLoginForm() {
           )}
         </button>
       </div>
+      <Link href="/farmer/signup" className="text-sm">Don't have an account? <span className="text-sm text-blue-light">Register</span></Link>
     </form>
   );
 } 
