@@ -130,11 +130,7 @@ const FarmerAidRecordsTable = () => {
                       </td>
                       <td className="py-5 px-4 dark:border-strokedark">
                         <div className="flex items-center space-x-2">
-                          <ButtonDefault
-                            label="View"
-                            onClick={() => {}}
-                            customClasses="bg-green-light text-white dark:bg-green px-4 py-2 rounded"
-                          />
+                     
                         </div>
                       </td>
                     </tr>
