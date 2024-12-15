@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 15, 2024 at 07:30 AM
+-- Generation Time: Dec 15, 2024 at 07:50 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -37,6 +37,13 @@ CREATE TABLE `admin_users` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `admin_users`
+--
+
+INSERT INTO `admin_users` (`id`, `username`, `password`, `name`, `role`, `created_at`, `updated_at`) VALUES
+(1, 'SuperAdmin', '$2y$10$btjQhHVY1OznvzmD6hmQl.m54Y/m1OwZrWjNKz2m2lBUG7D8oSdzq', 'Super Admin', 'admin', '2024-12-14 16:28:18', '2024-12-14 16:29:04');
+
 -- --------------------------------------------------------
 
 --
@@ -55,6 +62,15 @@ CREATE TABLE `aid_allocations` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `aid_allocations`
+--
+
+INSERT INTO `aid_allocations` (`id`, `aid_program_id`, `farmer_id`, `quantity_received`, `distribution_date`, `status`, `remarks`, `created_at`, `updated_at`) VALUES
+(10, 1, '1734173147373', '1 Karabao', '2024-12-15 13:34:59', 'Distributed', NULL, '2024-12-15 13:34:59', '2024-12-15 13:34:59'),
+(11, 1, '1734191863985', '1 Karabao', '2024-12-15 13:34:59', 'Distributed', NULL, '2024-12-15 13:34:59', '2024-12-15 13:34:59'),
+(12, 1, '1734192115852', '1 Karabao', '2024-12-15 13:34:59', 'Distributed', NULL, '2024-12-15 13:34:59', '2024-12-15 13:34:59');
+
 -- --------------------------------------------------------
 
 --
@@ -71,6 +87,16 @@ CREATE TABLE `aid_programs` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `aid_programs`
+--
+
+INSERT INTO `aid_programs` (`id`, `name`, `category`, `resource_allocation`, `assigned_barangay`, `created_at`, `updated_at`) VALUES
+(1, 'Kalabaw Para sa Lahat', 'Livestock and Poultry Assistance', '{\"type\":\"Karabao\",\"quantity\":\"10\",\"budget\":\"100000\"}', 'Real', '2024-12-14 17:02:02', '2024-12-15 01:31:12'),
+(2, 'Kalabaw Para sa Lahat - BACONG', 'Livestock and Poultry Assistance', '{\"type\":\"Karabao\",\"quantity\":\"25\",\"budget\":\"250000\"}', 'Bacong', '2024-12-14 17:08:16', '2024-12-14 22:43:04'),
+(3, 'AKAP: Alalay sa Kabuhayan at Agrikulturang Pinansyal', 'Financial Assistance', '{\"type\":\"Finacial Aid\",\"quantity\":\"200000\",\"budget\":\"200000\"}', 'Zarah', '2024-12-14 22:54:29', '2024-12-14 22:54:29'),
+(4, 'Fertilizer Para sa Lahat', 'Fertilizer Support', '{\"type\":\"(kg) Fertilizer\",\"quantity\":\"200\",\"budget\":\"20000\"}', 'Real', '2024-12-15 01:42:58', '2024-12-15 01:43:20');
+
 -- --------------------------------------------------------
 
 --
@@ -83,6 +109,28 @@ CREATE TABLE `crops` (
   `name` varchar(100) NOT NULL,
   `season` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `crops`
+--
+
+INSERT INTO `crops` (`id`, `farmer_id`, `name`, `season`) VALUES
+(4, '1734173147373', 'Rice', 'Wet'),
+(5, '1734173147373', 'Corn', 'Dry'),
+(8, '1734190878468', 'Corn', 'Wet'),
+(9, '1734190878468', 'Corn', 'Dry'),
+(10, '1734191863985', 'Mango', 'Wet'),
+(11, '1734191863985', 'Rice', 'Wet'),
+(12, '1734191863985', 'Coffee', 'Wet'),
+(13, '1734191863985', 'Sugarcane', 'Dry'),
+(14, '1734191863985', 'Wheat', 'Dry'),
+(15, '1734191863985', 'Cassava', 'Dry'),
+(16, '1734192115852', 'Wheat', 'Wet'),
+(17, '1734192115852', 'Soybean', 'Wet'),
+(18, '1734192115852', 'Corn', 'Wet'),
+(19, '1734192115852', 'Watermelon', 'Dry'),
+(20, '1734192115852', 'Eggplant', 'Dry'),
+(21, '1734192115852', 'Guava', 'Dry');
 
 -- --------------------------------------------------------
 
@@ -113,6 +161,17 @@ CREATE TABLE `farmers` (
   `remarks` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `farmers`
+--
+
+INSERT INTO `farmers` (`id`, `image`, `name`, `age`, `gender`, `birthday`, `phone`, `email`, `farm_location`, `land_size`, `farm_owner`, `reg_date`, `active`, `income`, `family_members`, `aid_requested`, `status`, `distribution_date`, `identification_no`, `remarks`) VALUES
+('1734173147373', '/images/user/1734173082440-443139914-images.jpg', 'Maria Santos', 45, 'F', '2222-01-23', 342423423, NULL, 'Real', '456 ha', 0, '2024-12-14 18:45:47', 1, 10000.00, 0, NULL, NULL, NULL, NULL, NULL),
+('1734186816597', '/images/user/1734186736733-825966949-user-03.png', 'Juan Dela Cruz', 56, '', '1988-05-22', 123, NULL, 'Zarah', '200 sqm', 0, '2024-12-14 22:33:36', 1, 7000.00, 0, NULL, NULL, NULL, NULL, NULL),
+('1734190878468', '/images/user/1734190804334-382275844-user-02.png', 'Ricardo Daliday', 45, 'M', '1999-02-22', NULL, NULL, 'San Jose', '900 ha', 1, '2024-12-14 23:41:18', 1, 100000.00, 0, NULL, NULL, NULL, NULL, NULL),
+('1734191863985', '/images/user/1734191835844-279346572-user-05.png', 'Maricel Gonzales', 36, 'Other', '1988-05-02', NULL, NULL, 'Real', '2 ha', 0, '2024-12-14 23:57:43', 1, 20000.00, 0, NULL, NULL, NULL, NULL, NULL),
+('1734192115852', '/images/user/1734192026556-921224357-user-04.png', 'Danilo Santos', 48, 'Other', '1976-02-02', NULL, NULL, 'Real', '200 sqm', 0, '2024-12-15 00:01:55', 1, 7000.00, 0, NULL, NULL, NULL, NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -125,6 +184,16 @@ CREATE TABLE `farm_photos` (
   `photo_url` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `farm_photos`
+--
+
+INSERT INTO `farm_photos` (`id`, `farmer_id`, `photo_url`, `created_at`) VALUES
+(2, '1734173147373', '/images/user/1734235751591-438715753-FFPbelltown2-1-1536x1030.min-800x600.png', '2024-12-15 04:09:12'),
+(3, '1734173147373', '/images/user/1734235751700-402636821-pexels-alejandro-barron-21404-96715.jpg', '2024-12-15 04:09:12'),
+(4, '1734186816597', '/images/user/1734237684341-678058441-304892190_464040052404368_647887662755920607_n.jpg', '2024-12-15 04:41:24'),
+(5, '1734173147373', '/images/user/1734237949868-709017721-304892190_464040052404368_647887662755920607_n.jpg', '2024-12-15 04:45:50');
 
 --
 -- Indexes for dumped tables
@@ -185,31 +254,31 @@ ALTER TABLE `farm_photos`
 -- AUTO_INCREMENT for table `admin_users`
 --
 ALTER TABLE `admin_users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `aid_allocations`
 --
 ALTER TABLE `aid_allocations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `aid_programs`
 --
 ALTER TABLE `aid_programs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `crops`
 --
 ALTER TABLE `crops`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `farm_photos`
 --
 ALTER TABLE `farm_photos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Constraints for dumped tables
