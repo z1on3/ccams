@@ -265,11 +265,12 @@ const EditFarmerModal: React.FC<EditFarmerModalProps> = ({ onClose, farmer }) =>
     try {
       // Format the data
       const formattedData = {
+        id: farmer.id, // Include the farmer ID
         name: formData.name,
         image: formData.image || farmer.image,
         age: parseInt(formData.age.toString()),
         birthday: new Date(formData.birthday).toISOString().split('T')[0],
-        contact_number: formData.contact_number,
+        phone: formData.contact_number,
         farm_location: formData.farm_location,
         land_size: formData.land_size,
         farm_owner: formData.farm_owner === 'Yes',
@@ -283,8 +284,8 @@ const EditFarmerModal: React.FC<EditFarmerModalProps> = ({ onClose, farmer }) =>
 
       console.log('Sending data:', formattedData); // Debug log
 
-      // Send the data to the API
-      const response = await fetch(`/api/farmers/${farmer.id}/update`, {
+      // Send the data to the API using the main farmers endpoint with PUT method
+      const response = await fetch('/api/farmers', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

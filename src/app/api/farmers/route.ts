@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { ResultSetHeader } from 'mysql2';
 
 export async function GET() {
   let connection;
@@ -64,10 +65,12 @@ export async function POST(request: Request) {
     await connection.beginTransaction();
 
     // Insert farmer
-    const [result] = await connection.query(
-      `INSERT INTO farmers (name, birthday, age, gender, contact_number, farm_location, land_size, farm_owner, income, image)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    const farmerId = Math.floor(1000000000000 + Math.random() * 9000000000000); 
+    const [result] = await connection.query<ResultSetHeader>(
+      `INSERT INTO farmers (id,name, birthday, age, gender, phone, farm_location, land_size, farm_owner, income, image)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
+        farmerId,
         data.name,
         data.birthday,
         data.age,
@@ -82,9 +85,9 @@ export async function POST(request: Request) {
     );
 
     // Get the inserted farmer's ID
-    const farmerId = result.insertId;
+    
 
-    // Insert crops if any
+    // Insert wet season crops if any
     if (data.crops && data.crops.length > 0) {
       const cropValues = data.crops.map((crop: { name: string; season: string }) => 
         [farmerId, crop.name, crop.season]
@@ -134,7 +137,7 @@ export async function PUT(request: Request) {
       income,
       crops
     } = body;
-
+    console.log(body);
     // Start a transaction
     const connection = await pool.getConnection();
     await connection.beginTransaction();
