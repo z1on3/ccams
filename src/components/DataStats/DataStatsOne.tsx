@@ -1,42 +1,96 @@
-import React from "react";
-import { dataStats } from "@/types/dataStats";
-import { HandCoins, Handshake, LucideIcon, LucideSprout, Tractor } from 'lucide-react';
+'use client';
 
+import { useState, useEffect } from "react";
+import { HandCoins, Handshake, LucideSprout, Tractor } from 'lucide-react';
 
+interface Analytics {
+  total_farmers: number;
+  total_aid_value: number;
+  eligible_farmers: number;
+  top_crop: {
+    name: string;
+    season: string;
+    count: number;
+    locations: string[];
+  };
+  growth_rate: number;
+}
 
-const dataStatsList = [
-  {
-    icon: (<Tractor color="#ffffff" />),
-    color: "#8155FF",
-    title: "Total Farmers",
-    value: "728",
-    growthRate: 2,
-  },
-  {
-    icon: (<HandCoins color="#ffffff" />),
-    color: "#FF9C55",
-    title: "Total Aid Distributed",
-    value: "647",
-    growthRate: 23,
-  },
-  {
-    icon: (<Handshake color="#ffffff" />),
-    color: "#18BFFF",
-    title: "Eligible Farmers for Aid",
-    value: "9,999",
-    growthRate: 10,
-  },
-  {
-    icon: (<LucideSprout color="#fff"/>),
-    color: "#3FD97F",
-    title: "Top Crop of the Current Season",
-    value: "Corn",
-    growthRate: 90,
-  },
+const DataStatsOne = () => {
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-];
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await fetch('/api/analytics');
+        if (!response.ok) {
+          throw new Error('Failed to fetch analytics');
+        }
+        const data = await response.json();
+        setAnalytics(data);
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-const DataStatsOne: React.FC<dataStats> = () => {
+    fetchAnalytics();
+  }, []);
+
+  if (isLoading || !analytics) {
+    return (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
+        {[...Array(4)].map((_, index) => (
+          <div key={index} className="rounded-[10px] bg-white p-6 shadow-1 dark:bg-gray-dark animate-pulse">
+            <div className="h-14.5 w-14.5 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+            <div className="mt-6">
+              <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="mt-2 h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const dataStatsList = [
+    {
+      icon: (<Tractor color="#ffffff" />),
+      color: "#8155FF",
+      title: "Total Farmers",
+      value: analytics.total_farmers.toLocaleString(),
+      growthRate: analytics.growth_rate,
+    },
+    {
+      icon: (<HandCoins color="#ffffff" />),
+      color: "#FF9C55",
+      title: "Total Aid Value",
+      value: `₱${analytics.total_aid_value.toLocaleString()}`,
+      growthRate: analytics.growth_rate,
+    },
+    {
+      icon: (<Handshake color="#ffffff" />),
+      color: "#18BFFF",
+      title: "Eligible Farmers",
+      value: analytics.eligible_farmers.toLocaleString(),
+      growthRate: analytics.growth_rate,
+    },
+    {
+      icon: (<LucideSprout color="#fff"/>),
+      color: "#3FD97F",
+      title: `Top Crop (${analytics.top_crop.season} Season)`,
+      value: analytics.top_crop.name === 'No crops' 
+        ? 'No crops yet'
+        : `${analytics.top_crop.name} (${analytics.top_crop.count} farmers)`,
+      subtitle: analytics.top_crop.name === 'No crops' 
+        ? ''
+        : `Grown in: ${analytics.top_crop.locations.join(', ')}`,
+      growthRate: analytics.growth_rate,
+    },
+  ];
+
   return (
     <>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
@@ -58,6 +112,11 @@ const DataStatsOne: React.FC<dataStats> = () => {
                   {item.value}
                 </h4>
                 <span className="text-body-sm font-medium">{item.title}</span>
+                {item.subtitle && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {item.subtitle}
+                  </p>
+                )}
               </div>
 
               <span
@@ -65,7 +124,7 @@ const DataStatsOne: React.FC<dataStats> = () => {
                   item.growthRate > 0 ? "text-green" : "text-red"
                 }`}
               >
-                {item.growthRate}%
+                {item.growthRate.toFixed(1)}%
                 {item.growthRate > 0 ? (
                   <svg
                     className="fill-current"

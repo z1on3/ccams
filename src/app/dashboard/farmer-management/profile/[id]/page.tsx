@@ -1,147 +1,66 @@
 // app/dashboard/farmer-management/profile/page.tsx
-"use client"; // Ensure it's client-side rendered in Next.js
-import { Farmer } from "@/types/farmer"; // Your farmer type
+"use client";
+import { Farmer } from "@/types/farmer";
 import FarmerProfile from "@/components/Dashboard/farmer-profile";
 import { useEffect, useState } from "react";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import MainLayout from "@/components/Layouts/MainLayout";
-import { Barangays } from "@/components/constants/barangays";
-
-// Dummy data for farmers
-const getRandomBarangay = () => {
-  const randomIndex = Math.floor(Math.random() * Barangays.length);
-  return Barangays[randomIndex];
-};
-
-// Dummy data for farmers
-const farmerData: Farmer[] = [
-  {
-    id: "18273456",
-    image: "/images/user/user-01.png",
-    name: "Maria Santos",
-    age: 45,
-    birthday: new Date(1979, 4, 12),
-    phone: 1234567890,
-    email: 987654321,
-    farm_location: getRandomBarangay().name,
-    land_size: "2 hectares",
-    crops: [
-      { name: "Rice", season: "Wet" },
-      { name: "Coconut", season: "Dry" },
-    ],
-    farm_owner: true,
-    reg_date: new Date(),
-    active: true,
-    income: 15000,
-  },
-  {
-    id: "781212864",
-    image: "/images/user/user-02.png",
-    name: "Juan Dela Cruz",
-    age: 50,
-    birthday: new Date(1974, 6, 22),
-    phone: 9876543210,
-    email: 654321987,
-    farm_location: getRandomBarangay().name,
-    land_size: "3 hectares",
-    crops: [
-      { name: "Bananas", season: "Wet" },
-      { name: "Corn", season: "Dry" },
-    ],
-    farm_owner: true,
-    reg_date: new Date(),
-    active: true,
-    income: 20000,
-  },
-  {
-    id: "1828127",
-    image: "/images/user/user-03.png",
-    name: "Pedro Bautista",
-    age: 35,
-    birthday: new Date(1989, 9, 10),
-    phone: 6543210987,
-    email: 543219876,
-    farm_location: "Casiguran",
-    land_size: "1.5 hectares",
-    crops: [
-      { name: "Root Crops", season: "Wet" },
-      { name: "Citrus Fruits", season: "Dry" },
-    ],
-    farm_owner: true,
-    reg_date: new Date(),
-    active: true,
-    income: 12000,
-  },
-  {
-    id: "1825634",
-    image: "/images/user/user-04.png",
-    name: "Jose Reyes",
-    age: 40,
-    birthday: new Date(1984, 11, 3),
-    phone: 4321098765,
-    email: 321098765,
-    farm_location: getRandomBarangay().name,
-    land_size: "4 hectares",
-    crops: [
-      { name: "Coffee", season: "Wet" },
-      { name: "Coconut", season: "Dry" },
-    ],
-    farm_owner: true,
-    reg_date: new Date(),
-    active: true,
-    income: 25000,
-  },
-  {
-    id: "1234856",
-    image: "/images/user/user-05.png",
-    name: "Lucia Gomez",
-    age: 30,
-    birthday: new Date(1994, 2, 14),
-    phone: 2109876543,
-    email: 109876543,
-    farm_location: getRandomBarangay().name,
-    land_size: "1 hectare",
-    crops: [
-      { name: "Peanuts", season: "Wet" },
-      { name: "Abaca", season: "Dry" },
-    ],
-    farm_owner: true,
-    reg_date: new Date(),
-    active: true,
-    income: 10000,
-  },
-  // Add more dummy farmers as needed...
-];
-
-
-interface FarmerPageProps {
-  farmer: Farmer | null;
-}
 
 const FarmerPage = ({ params }: { params: { id: string } }) => {
   const [farmer, setFarmer] = useState<Farmer | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate fetching the farmer data based on the ID
-    const fetchedFarmer = farmerData.find(f => f.id.replace(/\s/g, '').toLowerCase() === params.id.toLowerCase());
-    setFarmer(fetchedFarmer || null);
+    const fetchFarmer = async () => {
+      try {
+        const response = await fetch(`/api/farmers/${params.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch farmer data');
+        }
+        const data = await response.json();
+        setFarmer(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error fetching farmer:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFarmer();
   }, [params.id]);
 
-  if (!farmer) {
-    return <div>Farmer not found.</div>;
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="flex justify-center items-center h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error || !farmer) {
+    return (
+      <MainLayout>
+        <div className="flex justify-center items-center h-screen">
+          <div className="text-red-500">
+            {error || 'Farmer not found'}
+          </div>
+        </div>
+      </MainLayout>
+    );
   }
 
   return (
-  <>
     <MainLayout>
-    <div className="mx-auto w-full max-w-[970px]">
-      <Breadcrumb pageName="Farmer Profile" />
-
-      <FarmerProfile farmer={farmer} />
-    </div>
-  </MainLayout>
-    </>
+      <div className="mx-auto w-full max-w-[970px]">
+        <Breadcrumb pageName="Farmer Profile" />
+        <FarmerProfile farmer={farmer} />
+      </div>
+    </MainLayout>
   );
 };
 

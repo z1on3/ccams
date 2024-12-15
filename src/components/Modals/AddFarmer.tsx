@@ -4,6 +4,8 @@
 import { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import the CSS
+import { Barangays } from "../constants/barangays";
+import Image from "next/image";
 
 const cropsList = [
     "Wheat",
@@ -62,52 +64,139 @@ interface AddFarmerModalProps {
   onClose: () => void;
 }
 
+const RequiredLabel: React.FC<{ text: string }> = ({ text }) => (
+  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+    {text} <span className="text-red-500">*</span>
+  </label>
+);
+
+interface FarmerFormData {
+  name: string;
+  birthday: string;
+  age: number;
+  gender: string;
+  contact_number: string;
+  farm_location: string;
+  farm_type: string;
+  farm_owner: string;
+  land_size: string;
+  income: number;
+  image?: File | string;
+  wetSeasonCrops: string[];
+  drySeasonCrops: string[];
+}
+
 const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
 
-    const [farmerData, setFarmerData] = useState({
+    const [formData, setFormData] = useState<FarmerFormData>({
       name: "",
-      image: "",
-      age: "",
-      income: "",
+      birthday: "",
+      age: 0,
+      gender: "",
+      contact_number: "",
+      farm_location: "",
+      farm_type: "",
+      farm_owner: "",
       land_size: "",
-      wetSeasonCrops: [] as string[],
-      drySeasonCrops: [] as string[],
+      income: 0,
+      wetSeasonCrops: [],
+      drySeasonCrops: []
     });
 
-    const [imageBlob, setImageBlob] = useState<string | null>(null); // State to hold the blob URL
+    const [imageBlob, setImageBlob] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files ? event.target.files[0] : null;
-      if (file) {
-        // Store only the file name in farmerData.image
-        setFarmerData((prevState) => ({
-          ...prevState,
-          image: file.name, // Store the file name (not the full file)
+    const calculateAge = (birthDate: string) => {
+      const today = new Date();
+      const birth = new Date(birthDate);
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      
+      return age;
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const { name, value } = e.target;
+      
+      if (name === 'birthday') {
+        const age = calculateAge(value);
+        setFormData(prev => ({
+          ...prev,
+          [name]: value,
+          age: age
         }));
-  
-        // Create a blob URL for the image and store it in a separate state variable
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
+    };
+
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files ? event.target.files[0] : null;
+      if (!file) return;
+
+      try {
+        setIsUploading(true);
+
+        // Create a blob URL for preview
         const objectUrl = URL.createObjectURL(file);
-        setImageBlob(objectUrl); // Set the image blob URL to show in the img tag
+        setImageBlob(objectUrl);
+
+        // Create FormData and append file
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Upload the file
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const data = await response.json();
+        
+        // Update farmer data with the new image path
+        setFormData(prev => ({
+          ...prev,
+          image: data.path
+        }));
+
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast.error('Failed to upload image. Please try again.');
+        // Reset to default image on error
+        setFormData(prev => ({
+          ...prev,
+          image: '/images/user/default-user.png'
+        }));
+        setImageBlob(null);
+      } finally {
+        setIsUploading(false);
       }
     };
   
-    const imageSrc = imageBlob || 'default-image-url'; // Use the image blob if available, else use a default
+    const imageSrc = imageBlob || formData.image;
   
     const [wetCropInput, setWetCropInput] = useState(""); // Separate inputs for wet/dry season crops
     const [dryCropInput, setDryCropInput] = useState("");
     const [wetSuggestions, setWetSuggestions] = useState<string[]>([]); // Separate suggestions for wet season
     const [drySuggestions, setDrySuggestions] = useState<string[]>([]); // Separate suggestions for dry season
   
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFarmerData({ ...farmerData, [e.target.name]: e.target.value });
-    };
-  
     const handleCropSelect = (
         crop: string,
         season: "wetSeasonCrops" | "drySeasonCrops"
       ) => {
         const cropInput = crop.trim().toLowerCase(); // Normalize the input crop value
-        const existingCrops = farmerData[season].map(c => c.toLowerCase()); // Normalize existing crops
+        const existingCrops = formData[season].map(c => c.toLowerCase()); // Normalize existing crops
       
         // Check if the crop already exists
         if (existingCrops.includes(cropInput)) {
@@ -124,7 +213,7 @@ const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
         }
       
         // Update the farmer data with the new crop
-        setFarmerData((prev) => ({
+        setFormData((prev) => ({
           ...prev,
           [season]: [...prev[season], crop], // Add the new crop
         }));
@@ -166,10 +255,66 @@ const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
       crop: string,
       season: "wetSeasonCrops" | "drySeasonCrops"
     ) => {
-      setFarmerData((prev) => ({
+      setFormData((prev) => ({
         ...prev,
         [season]: prev[season].filter((item) => item !== crop),
       }));
+    };
+  
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      try {
+        // Format the data
+        const formattedData = {
+          name: formData.name,
+          image: formData.image || 'default-user.png',
+          age: parseInt(formData.age),
+          birthday: new Date(formData.birthday).toISOString().split('T')[0],
+          phone: formData.contact_number ? parseInt(formData.contact_number) : null,
+          email: formData.email ? parseInt(formData.email) : null,
+          farm_location: formData.farm_location,
+          land_size: formData.land_size,
+          farm_owner: formData.farm_owner,
+          income: parseFloat(formData.income),
+          crops: [
+            ...formData.wetSeasonCrops.map(crop => ({ name: crop, season: 'Wet' })),
+            ...formData.drySeasonCrops.map(crop => ({ name: crop, season: 'Dry' }))
+          ]
+        };
+
+        console.log('Sending data:', formattedData); // Debug log
+
+        // Send the data to the API
+        const response = await fetch('/api/farmers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formattedData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save farmer');
+        }
+
+        toast.success('Farmer added successfully!', {
+          position: "bottom-center",
+          autoClose: 3000,
+        });
+
+        // Close the modal after a short delay
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      } catch (error) {
+        console.error('Error saving farmer:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to add farmer. Please try again.', {
+          position: "bottom-center",
+          autoClose: 3000,
+        });
+      }
     };
   
     return (
@@ -181,101 +326,203 @@ const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
         <div className="max-h-[80vh] overflow-y-auto">
       {/* Image Upload */}
       <div className="mb-6">
-      {farmerData.image && (
-          <div className="mt-4 flex justify-center">
-            <img
+        <div className="mt-4 flex justify-center">
+          <div className="relative">
+            <Image 
               src={imageSrc}
               alt="Farmer Image"
-              className="w-32 h-32 rounded-full object-cover"
+              width={128}
+              height={128}
+              className="rounded-full object-cover"
             />
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              </div>
+            )}
           </div>
-        )}
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Farmer Image</label>
+        </div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+          Farmer Image
+        </label>
         <input
-  type="file"
-  name="image"
-  accept="image/*"
-  onChange={handleImageUpload}
-  className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
-/>
-
-        
+          type="file"
+          name="image"
+          accept="image/*"
+          onChange={handleImageUpload}
+          disabled={isUploading}
+          className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+        />
       </div>
 
       {/* Name & Age Fields (50% / 50% Layout) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
         {/* Name Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Name</label>
+          <RequiredLabel text="Name" />
           <input
             type="text"
             name="name"
-            value={farmerData.name}
+            value={formData.name}
             onChange={handleInputChange}
             className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+            required
+          />
+        </div>
+
+        {/* Gender Field */}
+        <div>
+          <RequiredLabel text="Gender" />
+          <select
+            name="gender"
+            value={formData.gender}
+            onChange={handleInputChange}
+            className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+            required
+          >
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="LGBTQ+">LGBTQ+</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Birthday & Age Fields */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+        <div>
+          <RequiredLabel text="Birthday" />
+          <input
+            type="date"
+            name="birthday"
+            value={formData.birthday}
+            onChange={handleInputChange}
+            className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+            required
           />
         </div>
 
         {/* Age Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Age</label>
+          <RequiredLabel text="Age" />
           <input
             type="number"
             name="age"
-            value={farmerData.age}
+            value={formData.age}
             onChange={handleInputChange}
             className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+            required
+            readOnly
           />
         </div>
       </div>
 
+      {/* Phone & Farm Location Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-        {/* Income Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Income</label>
-          <div className="flex items-center space-x-2">
-            <input
-              type="text"
-              name="income"
-              value={farmerData.income}
-              onChange={handleInputChange}
-              className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
-            />
-          </div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Phone</label>
+          <input
+            type="tel"
+            name="contact_number"
+            value={formData.contact_number}
+            onChange={handleInputChange}
+            className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+          />
         </div>
 
-        {/* Land Size Field with Dropdown */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Land Size</label>
+          <RequiredLabel text="Farm Location" />
+          <select
+            name="farm_location"
+            value={formData.farm_location}
+            onChange={handleInputChange}
+            className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+            required
+          >
+            <option value="">Select Barangay</option>
+            {Barangays.map((barangay) => (
+              <option key={barangay.code} value={barangay.name}>
+                {barangay.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Email & Farm Owner Fields */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Email</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+          />
+        </div>
+
+        <div>
+          <RequiredLabel text="Farm Owner" />
+          <select
+            name="farm_owner"
+            value={formData.farm_owner}
+            onChange={handleInputChange}
+            className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+            required
+          >
+            <option value="">Select Option</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Land Size & Income Fields */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+        <div>
+          <RequiredLabel text="Land Size" />
           <div className="flex items-center space-x-2">
             <input
               type="number"
-              name="landSize"
-              value={farmerData.land_size.split(' ')[0]} // Get the numeric value part from land_size
+              name="land_size"
+              value={formData.land_size.split(' ')[0]}
               onChange={(e) => {
-                setFarmerData(prevState => ({
-                  ...prevState,
-                  land_size: `${e.target.value} ${farmerData.land_size.split(' ')[1] || 'm²'}`, // Concatenate new size with unit
+                setFormData(prev => ({
+                  ...prev,
+                  land_size: `${e.target.value} ${prev.land_size.split(' ')[1] || 'ha'}`
                 }));
               }}
               className="w-2/3 rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+              required
             />
             <select
-              name="landUnit"
-              value={farmerData.land_size.split(' ')[1] || 'm²'} // Get the unit part from land_size
+              value={formData.land_size.split(' ')[1] || 'ha'}
               onChange={(e) => {
-                setFarmerData(prevState => ({
-                  ...prevState,
-                  land_size: `${farmerData.land_size.split(' ')[0]} ${e.target.value}`, // Concatenate size with new unit
+                setFormData(prev => ({
+                  ...prev,
+                  land_size: `${prev.land_size.split(' ')[0]} ${e.target.value}`
                 }));
               }}
               className="w-1/3 rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
             >
-              <option value="m²">Square Meters</option>
               <option value="ha">Hectares</option>
-              <option value="acres">Acres</option>
+              <option value="sqm">Square Meters</option>
+              <option value="acre">Acres</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <RequiredLabel text="Income" />
+          <input
+            type="number"
+            name="income"
+            value={formData.income}
+            onChange={handleInputChange}
+            className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+            required
+          />
         </div>
       </div>
 
@@ -305,7 +552,7 @@ const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
           </ul>
         )}
         <div className="flex flex-wrap gap-2 mt-2">
-          {farmerData.wetSeasonCrops.map((crop, idx) => (
+          {formData.wetSeasonCrops.map((crop, idx) => (
             <span
               key={idx}
               className="bg-green-200 text-green-800 px-3 py-1 rounded-lg flex items-center gap-2 shadow-sm"
@@ -349,7 +596,7 @@ const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
           </ul>
         )}
         <div className="flex flex-wrap gap-2 mt-4">
-          {farmerData.drySeasonCrops.map((crop, idx) => (
+          {formData.drySeasonCrops.map((crop, idx) => (
             <span
               key={idx}
               className="bg-yellow-200 text-yellow-800 px-3 py-1 rounded-lg flex items-center gap-2 shadow-sm"
@@ -376,6 +623,7 @@ const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
         </button>
         <button
           type="submit"
+          onClick={handleSubmit}
           className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-md hover:bg-green-600 focus:outline-none transition-all"
         >
           Save Farmer

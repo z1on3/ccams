@@ -71,7 +71,7 @@ const Header = (props: {
             <h1 className="mb-0.5 text-heading-5 font-bold text-dark dark:text-white">
             Comprehensive Crop and Aid Management System
             </h1>
-            <p className="font-medium">Municipality of Wherever</p>
+            <p className="font-medium">Municipality of San Luis</p>
           </div>
         </div>
 

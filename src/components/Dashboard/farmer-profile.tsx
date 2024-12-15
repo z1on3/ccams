@@ -14,6 +14,9 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
   const pathname = usePathname();
   const { image, name, farm_location, crops, income } = farmer;
 
+  // Ensure image path has leading slash
+  const farmerImage = image?.startsWith('/') ? image : '/images/user/default-user.png';
+
   return (
     <div className="overflow-hidden rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
       <div className="relative z-20 h-35 md:h-65" >
@@ -50,9 +53,8 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
       <div className="px-10 pb-6 text-center lg:pb-8 xl:pb-11.5">
         
         <div className="relative z-30 mx-auto -mt-14 h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-cover bg-center">
-        
           <Image
-            src={image}
+            src={farmerImage}
             alt={name}
             className="object-cover"
             width={120}
@@ -133,9 +135,12 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
 
       
         <div className="relative">
-          <img
+        <img
             src="https://via.placeholder.com/300?text=Add%20Photo"
             alt="Placeholder with plus sign"
+
+            width={300}
+            height={300}
             className="w-full h-full object-cover rounded-lg shadow-lg"
           />
           <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity duration-300">
@@ -145,9 +150,12 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
       
         {Array.from({ length: Math.floor(Math.random() * (16 - 4 + 1)) + 4 }).map((_, index) => (
           <div key={index} className="relative">
-            <img
+                        <img
               src={`https://via.placeholder.com/300?text=Image+${index + 1}`}
               alt={`Placeholder Image ${index + 1}`}
+
+              width={300}
+              height={300}
               className="w-full h-full object-cover rounded-lg shadow-lg"
             />
             <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity duration-300">
