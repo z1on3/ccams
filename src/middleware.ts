@@ -29,6 +29,7 @@ const publicPaths = [
 
 const farmerProtectedPaths = [
   '/api/farmers',
+  '/api/farmer',
   '/api/aid-records',
   '/api/farmer/aid-records'
 ];
@@ -67,7 +68,7 @@ export async function middleware(request: NextRequest) {
         // For farmer token, verify if they're accessing their own data
         const { payload } = await jose.jwtVerify(farmerToken, secret);
         
-        
+        console.log(payload);
         // Check if payload has farmer ID
         if (!payload) {
           return NextResponse.redirect(new URL('/farmer/login', request.url));
