@@ -1,13 +1,10 @@
-import ECommerce from "@/components/Dashboard/E-commerce";
 import { Metadata } from "next";
-import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import React from "react";
 import MainLayout from "@/components/Layouts/MainLayout";
 import MainDash from "@/components/Dashboard/main-dashboard";
 
 export const metadata: Metadata = {
-  title:
-    "Admin Dashboard",
+  title: "Admin Dashboard",
   description: "This is Next.js Home page for NextAdmin Dashboard Kit",
 };
 

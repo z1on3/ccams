@@ -381,9 +381,9 @@ const EditFarmerModal: React.FC<EditFarmerModalProps> = ({ onClose, farmer }) =>
                   required
                 >
                   <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="LGBTQ+">LGBTQ+</option>
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
+                  <option value="Other">LGBTQ+</option>
                 </select>
               </div>
             </div>
