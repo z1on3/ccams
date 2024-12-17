@@ -407,6 +407,7 @@ const AidDistribution = ({ programId }: { programId: string }) => {
                         height={50} 
                         alt={farmer.name} 
                         className="rounded-full mr-3"
+                        style={{ objectFit: 'cover', height: '50px', width: '50px' }}
                       />
                       <span>{farmer.name}</span>
                     </div>
