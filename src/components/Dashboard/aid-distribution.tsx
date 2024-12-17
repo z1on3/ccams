@@ -16,7 +16,7 @@ interface Farmer {
   income: number;
   crops: Array<{ name: string; season: string; }>;
   farm_ownership_type: string;
-  farmer_type: string[];
+  farmer_type: string[] | string;
 }
 
 interface AidProgram {
@@ -365,6 +365,18 @@ const AidDistribution = ({ programId }: { programId: string }) => {
               >
                 Crops <SortIcon field="crops" />
               </th>
+              <th 
+                className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
+                onClick={() => handleSort('farm_ownership_type')}
+              >
+                Ownership Type <SortIcon field="farm_ownership_type" />
+              </th>
+              <th 
+                className="min-w-[200px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
+                onClick={() => handleSort('farmer_type')}
+              >
+                Farmer Type <SortIcon field="farmer_type" />
+              </th>
               <th className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white">
                 Quantity
               </th>
@@ -411,6 +423,16 @@ const AidDistribution = ({ programId }: { programId: string }) => {
                   <td className="py-5 px-4 dark:border-strokedark">
                     {farmer.crops.map(crop => crop.name).join(", ")}
                   </td>
+                  <td className="py-5 px-4 dark:border-strokedark text-center">
+                    {farmer.farm_ownership_type || 'N/A'}
+                  </td>
+                  <td className="py-5 px-4 dark:border-strokedark text-center">
+                    {Array.isArray(farmer.farmer_type) 
+                      ? farmer.farmer_type.join(', ') 
+                      : (typeof farmer.farmer_type === 'string' 
+                        ? JSON.parse(farmer.farmer_type).join(', ') 
+                        : 'N/A')}
+                  </td>
                   <td className="py-5 px-4 dark:border-strokedark">
                     {selectedFarmers.has(farmer.id) && (
                       <input
@@ -429,7 +451,7 @@ const AidDistribution = ({ programId }: { programId: string }) => {
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="text-center py-4 text-gray-500 dark:text-gray-400">
+                <td colSpan={9} className="text-center py-4 text-gray-500 dark:text-gray-400">
                   No eligible farmers found
                 </td>
               </tr>
