@@ -13,6 +13,8 @@ interface FarmerRow extends RowDataPacket {
   farm_location: string;
   land_size: string;
   farm_owner: boolean;
+  farm_ownership_type: string;
+  farmer_type: string;
   reg_date: Date;
   active: boolean;
   income: number;
@@ -68,12 +70,20 @@ export async function GET(request: Request) {
       return { name, season };
     }) : [];
 
+    // Parse farmer_type from JSON
+    let farmer_type = [];
+    try {
+      farmer_type = farmer.farmer_type ? JSON.parse(farmer.farmer_type) : [];
+    } catch (e) {
+      console.error('Error parsing farmer_type:', e);
+    }
+
     // Format the response
     const formattedFarmer = {
       ...farmer,
       crops,
-      birthday: farmer.birthday.toISOString().split('T')[0],
-      reg_date: farmer.reg_date.toISOString().split('T')[0]
+      farmer_type,
+
     };
 
     return NextResponse.json({ farmer: formattedFarmer });

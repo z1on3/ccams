@@ -62,7 +62,7 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
 
   const fetchAidReceived = async () => {
     try {
-      const response = await fetch('/api/farmer/aid-records');
+      const response = await fetch(`/api/farmers/${farmer.id}/aid-records`);
       if (!response.ok) throw new Error('Failed to fetch aid records');
       const data = await response.json();
       setAidReceived(data.records || []);
@@ -268,7 +268,7 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
       };
     };
   };
-
+  console.log(farmer);
   return (
     <div className="overflow-hidden rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
       <div className="relative z-20 h-35 md:h-65">
@@ -299,11 +299,30 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
           />
 
         </div>
-
-        <h4 className="mt-2 text-3xl text-black dark:text-white font-bold font-bold ">
+      <div className="flex flex-col items-center justify-center">
+        <h4 className="mt-2 text-3xl text-black dark:text-white font-bold">
           {farmer.name}
         </h4>
         <h6 className="text-lg text-gray-500 dark:text-gray-400">({farmer.age} years old)</h6>
+        
+        {/* Farmer Type Tags */}
+        <div className="flex flex-wrap gap-2 mt-3 justify-center">
+          {Array.isArray(farmer.farmer_type) && farmer.farmer_type.length > 0 ? (
+            farmer.farmer_type.map((type, index) => (
+              <span
+                key={index}
+                className="inline-block px-3 py-1.5 text-sm font-medium text-primary bg-primary/10 rounded-full"
+              >
+                {type}
+              </span>
+            ))
+          ) : (
+            <span className="inline-block px-3 py-1.5 text-sm font-medium text-gray-500 bg-gray-100 dark:text-gray-400 dark:bg-gray-700 rounded-full">
+              Farmer Type not specified
+            </span>
+          )}
+        </div>
+      </div>
         
         {/* Edit and Print Buttons */}
         <div className="mt-6 w-full flex justify-center gap-2">
@@ -370,8 +389,8 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
             <p className="text-lg font-bold text-primary">{farmer.land_size}</p>
           </div>
           <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-            <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Farm Owner</h5>
-            <p className="text-lg font-bold text-primary">{farmer.farm_owner ? 'Yes' : 'No'}</p>
+            <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Farm Ownership</h5>
+            <p className="text-lg font-bold text-primary">{farmer.farm_ownership_type || 'Not specified'}</p>
           </div>
           <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
             <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Annual Income</h5>
@@ -382,7 +401,7 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
         {/* Crops Section */}
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Wet Season Crops Card */}
-          <div className="rounded-lg bg-gray-50 p-6 dark:bg-gray-800">
+          <div className="rounded-lg bg-gray-50 p-6 dark:bg-gray-800 text-center">
             <h5 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
               Wet Season Crops
             </h5>

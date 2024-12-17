@@ -15,6 +15,8 @@ interface Farmer {
   land_size: string;
   income: number;
   crops: Array<{ name: string; season: string; }>;
+  farm_ownership_type: string;
+  farmer_type: string[];
 }
 
 interface AidProgram {
@@ -40,6 +42,8 @@ const AidDistribution = ({ programId }: { programId: string }) => {
   const [error, setError] = useState<string | null>(null);
   const [sortField, setSortField] = useState<keyof Farmer>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [selectedOwnershipType, setSelectedOwnershipType] = useState<string>('');
+  const [selectedFarmerTypes, setSelectedFarmerTypes] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,10 +89,20 @@ const AidDistribution = ({ programId }: { programId: string }) => {
     }
   };
 
-  const filteredFarmers = farmers.filter(farmer =>
-    farmer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    farmer.farm_location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFarmers = farmers.filter(farmer => {
+    const matchesSearch = (
+      farmer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      farmer.farm_location.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const matchesOwnershipType = !selectedOwnershipType || 
+      farmer.farm_ownership_type === selectedOwnershipType;
+
+    const matchesFarmerType = selectedFarmerTypes.length === 0 || 
+      selectedFarmerTypes.some(type => farmer.farmer_type.includes(type));
+
+    return matchesSearch && matchesOwnershipType && matchesFarmerType;
+  });
 
   // Sort farmers
   const sortedFarmers = [...filteredFarmers].sort((a, b) => {
@@ -213,6 +227,16 @@ const AidDistribution = ({ programId }: { programId: string }) => {
     }
   };
 
+  const handleFarmerTypeChange = (type: string) => {
+    setSelectedFarmerTypes(prev => {
+      if (prev.includes(type)) {
+        return prev.filter(t => t !== type);
+      } else {
+        return [...prev, type];
+      }
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -247,8 +271,8 @@ const AidDistribution = ({ programId }: { programId: string }) => {
         </p>
       </div>
 
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col gap-4 mb-4">
+        <div className="flex items-center gap-4">
           <input
             type="text"
             placeholder="Search farmers..."
@@ -256,18 +280,41 @@ const AidDistribution = ({ programId }: { programId: string }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+
+          <select
+            value={selectedOwnershipType}
+            onChange={(e) => setSelectedOwnershipType(e.target.value)}
+            className="rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+          >
+            <option value="">All Ownership Types</option>
+            <option value="Land Owner">Land Owner</option>
+            <option value="Tenant">Tenant</option>
+          </select>
+
+          <ButtonDefault
+            label="Distribute Aid"
+            onClick={handleDistribute}
+            customClasses={`px-6 py-3 rounded-lg ${
+              selectedFarmers.size > 0
+                ? 'bg-green-light text-white dark:bg-green'
+                : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+            }`}
+          />
         </div>
 
-        <ButtonDefault
-          label="Distribute Aid"
-          onClick={handleDistribute}
-          customClasses={`px-6 py-3 rounded-lg ${
-            selectedFarmers.size > 0
-              ? 'bg-green-light text-white dark:bg-green'
-              : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-          }`}
-          disabled={selectedFarmers.size === 0}
-        />
+        <div className="flex flex-wrap gap-2">
+          {['Coconut Farmer', 'Rice Farmer', 'Fruit & Vegetables', 'Poultry Farmers'].map((type) => (
+            <label key={type} className="inline-flex items-center">
+              <input
+                type="checkbox"
+                checked={selectedFarmerTypes.includes(type)}
+                onChange={() => handleFarmerTypeChange(type)}
+                className="form-checkbox h-5 w-5 text-primary border-gray-300 rounded focus:ring-primary"
+              />
+              <span className="ml-2 text-sm text-gray-700 dark:text-gray-200">{type}</span>
+            </label>
+          ))}
+        </div>
       </div>
 
       <div className="max-w-full overflow-x-auto">

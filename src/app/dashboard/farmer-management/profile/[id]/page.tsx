@@ -3,7 +3,6 @@
 import { Farmer } from "@/types/farmer";
 import FarmerProfile from "@/components/Dashboard/farmer-profile";
 import { useEffect, useState } from "react";
-import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import MainLayout from "@/components/Layouts/MainLayout";
 

@@ -15,6 +15,8 @@ const FarmersTable = () => {
   const [sortField, setSortField] = useState<keyof Farmer>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedOwnershipType, setSelectedOwnershipType] = useState<string>('');
+  const [selectedFarmerTypes, setSelectedFarmerTypes] = useState<string[]>([]);
   const recordsPerPage = 10;
 
   // Fetch farmers data
@@ -51,13 +53,34 @@ const FarmersTable = () => {
     }
   };
 
+  const handleFarmerTypeChange = (type: string) => {
+    setSelectedFarmerTypes(prev => {
+      if (prev.includes(type)) {
+        return prev.filter(t => t !== type);
+      } else {
+        return [...prev, type];
+      }
+    });
+  };
+
   // Function to filter farmers based on the search term
   const filteredFarmers = data.filter(farmer => {
-    return (
-      farmer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      farmer.farm_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      farmer.crops.some(crop => crop.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = (
+      farmer.name.toLowerCase().includes(searchLower) ||
+      farmer.farm_location.toLowerCase().includes(searchLower) ||
+      (farmer.farm_ownership_type || '').toLowerCase().includes(searchLower) ||
+      (farmer.farmer_type || []).some(type => type.toLowerCase().includes(searchLower)) ||
+      farmer.crops.some(crop => crop.name.toLowerCase().includes(searchLower))
     );
+
+    const matchesOwnershipType = !selectedOwnershipType || 
+      farmer.farm_ownership_type === selectedOwnershipType;
+
+    const matchesFarmerType = selectedFarmerTypes.length === 0 || 
+      selectedFarmerTypes.some(type => farmer.farmer_type.includes(type));
+
+    return matchesSearch && matchesOwnershipType && matchesFarmerType;
   });
 
   // Sort farmers
@@ -161,6 +184,32 @@ const FarmersTable = () => {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-4 mb-4">
+        <select
+          value={selectedOwnershipType}
+          onChange={(e) => setSelectedOwnershipType(e.target.value)}
+          className="rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+        >
+          <option value="">All Ownership Types</option>
+          <option value="Land Owner">Land Owner</option>
+          <option value="Tenant">Tenant</option>
+        </select>
+
+        <div className="flex flex-wrap gap-4">
+          {['Coconut Farmer', 'Rice Farmer', 'Fruit & Vegetables', 'Poultry Farmers'].map((type) => (
+            <label key={type} className="inline-flex items-center">
+              <input
+                type="checkbox"
+                checked={selectedFarmerTypes.includes(type)}
+                onChange={() => handleFarmerTypeChange(type)}
+                className="form-checkbox h-5 w-5 text-primary border-gray-300 rounded focus:ring-primary"
+              />
+              <span className="ml-2 text-sm text-gray-700 dark:text-gray-200">{type}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
@@ -201,6 +250,18 @@ const FarmersTable = () => {
                   >
                     Crops <SortIcon field="crops" />
                   </th>
+                  <th 
+                    className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
+                    onClick={() => handleSort('farm_ownership_type')}
+                  >
+                    Ownership Type <SortIcon field="farm_ownership_type" />
+                  </th>
+                  <th 
+                    className="min-w-[200px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
+                    onClick={() => handleSort('farmer_type')}
+                  >
+                    Farmer Type <SortIcon field="farmer_type" />
+                  </th>
                   <th className="py-4 px-4 font-medium text-black dark:text-white">
                     Actions
                   </th>
@@ -239,6 +300,12 @@ const FarmersTable = () => {
                         {farmer.crops && farmer.crops.length > 0
                           ? farmer.crops.map(crop => crop.name).join(", ")
                           : "No crops"}
+                      </td>
+                      <td className="py-5 px-4 dark:border-strokedark text-center">
+                        {farmer.farm_ownership_type || 'N/A'}
+                      </td>
+                      <td className="py-5 px-4 dark:border-strokedark text-center">
+                        {farmer.farmer_type?.join(', ') || 'N/A'}
                       </td>
                       <td className="py-5 px-4 dark:border-strokedark">
                         <div className="flex items-center space-x-2">

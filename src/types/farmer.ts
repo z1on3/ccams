@@ -1,20 +1,31 @@
 import { Crops } from "./crops";
 
-export type Farmer = {
-    id: string,
-    image: string;
+export interface Farmer {
+  id: string;
+  image: string;
+  name: string;
+  age: number;
+  gender: string;
+  birthday: string;
+  phone: string;
+  email: string;
+  farm_location: string;
+  land_size: string;
+  farm_owner: boolean;
+  farm_ownership_type: string;
+  farmer_type: string[];
+  reg_date: string;
+  active: boolean;
+  income: number;
+  family_members: number;
+  aid_requested?: string;
+  status?: any;
+  distribution_date?: string;
+  identification_no?: string;
+  remarks?: string;
+  crops: Array<{
     name: string;
-    age: number;
-    gender?: string;
-    birthday: Date;
-    phone?: number;
-    email?: number;
-    farm_location: string;
-    land_size: string;
-    crops: Crops[];
-    farm_owner: boolean;
-    reg_date: Date;
-    active: boolean;
-    income: number;
-  };
+    season: string;
+  }>;
+}
   

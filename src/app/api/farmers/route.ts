@@ -8,42 +8,39 @@ export async function GET() {
     connection = await pool.getConnection();
     const [farmers] = await connection.query(`
       SELECT 
-        f.*,
-        GROUP_CONCAT(DISTINCT CASE WHEN c.season = 'Wet' THEN c.name END) as wet_season_crops,
-        GROUP_CONCAT(DISTINCT CASE WHEN c.season = 'Dry' THEN c.name END) as dry_season_crops
+        f.*, 
+        GROUP_CONCAT(CONCAT_WS(':', c.name, c.season)) as crops
       FROM farmers f
-      LEFT JOIN crops c ON f.id = c.farmer_id
+      LEFT JOIN crops c ON c.farmer_id = f.id
       GROUP BY f.id
     `);
 
     // Transform the data to include crops as an array
-    const transformedFarmers = farmers.map((farmer: any) => {
-      const crops = [];
-      
-      // Add wet season crops
-      if (farmer.wet_season_crops) {
-        const wetCrops = farmer.wet_season_crops.split(',');
-        wetCrops.forEach((crop: string) => {
-          if (crop) crops.push({ name: crop.trim(), season: 'Wet' });
-        });
-      }
-      
-      // Add dry season crops
-      if (farmer.dry_season_crops) {
-        const dryCrops = farmer.dry_season_crops.split(',');
-        dryCrops.forEach((crop: string) => {
-          if (crop) crops.push({ name: crop.trim(), season: 'Dry' });
-        });
+    const transformedFarmers = (farmers as any[]).map((farmer: any) => {
+      // Parse crops from GROUP_CONCAT result
+      const crops = farmer.crops ? farmer.crops.split(',').map((crop: string) => {
+        const [name, season] = crop.split(':');
+        return { name, season };
+      }) : [];
+
+      // Parse farmer_type from JSON
+      let farmer_type = [];
+      try {
+        farmer_type = farmer.farmer_type ? JSON.parse(farmer.farmer_type) : [];
+      } catch (e) {
+        console.error('Error parsing farmer_type:', e);
       }
 
-      // Remove the concatenated fields and add the crops array
-      const { wet_season_crops, dry_season_crops, ...farmerData } = farmer;
+      // Format the response
       return {
-        ...farmerData,
-        crops: crops
+        ...farmer,
+        crops,
+        farmer_type,
+        birthday: farmer.birthday,
+      reg_date: farmer.reg_date
       };
     });
-
+    console.log(transformedFarmers);
     return NextResponse.json(transformedFarmers);
   } catch (error) {
     console.error('Error fetching farmers:', error);
@@ -67,8 +64,11 @@ export async function POST(request: Request) {
     // Insert farmer
     const farmerId = Math.floor(1000000000000 + Math.random() * 9000000000000); 
     const [result] = await connection.query<ResultSetHeader>(
-      `INSERT INTO farmers (id,name, birthday, age, gender, phone, farm_location, land_size, farm_owner, income, image)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO farmers (
+        id, name, birthday, age, gender, phone, farm_location, 
+        land_size, farm_owner, income, image, farm_ownership_type, farmer_type
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         farmerId,
         data.name,
@@ -80,14 +80,13 @@ export async function POST(request: Request) {
         data.land_size,
         data.farm_owner === 'true',
         data.income,
-        data.image || '/images/user/default-user.png'
+        data.image || '/images/user/default-user.png',
+        data.farmOwnerClassification,
+        JSON.stringify(data.farmerType || [])
       ]
     );
 
-    // Get the inserted farmer's ID
-    
-
-    // Insert wet season crops if any
+    // Insert crops if any
     if (data.crops && data.crops.length > 0) {
       const cropValues = data.crops.map((crop: { name: string; season: string }) => 
         [farmerId, crop.name, crop.season]
@@ -123,6 +122,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
+    console.log('Received data in PUT request:', body);
     const {
       id,
       name,
@@ -135,23 +135,38 @@ export async function PUT(request: Request) {
       land_size,
       farm_owner,
       income,
-      crops
+      crops,
+      farm_ownership_type,
+      farmer_type
     } = body;
-    console.log(body);
+
     // Start a transaction
     const connection = await pool.getConnection();
     await connection.beginTransaction();
 
     try {
       // Update farmer
-      await connection.query(
-        `UPDATE farmers SET 
-          name = ?, image = ?, age = ?, birthday = ?, phone = ?, 
-          email = ?, farm_location = ?, land_size = ?, farm_owner = ?, 
-          income = ?
-        WHERE id = ?`,
-        [name, image, age, birthday, phone, email, farm_location, land_size, farm_owner, income, id]
-      );
+      const updateQuery = `UPDATE farmers SET 
+        name = ?, image = ?, age = ?, birthday = ?, phone = ?, 
+        email = ?, farm_location = ?, land_size = ?, farm_owner = ?, 
+        income = ?, farm_ownership_type = ?, farmer_type = ?
+      WHERE id = ?`;
+      
+      // Ensure farmer_type is a simple array before stringifying
+      const farmerTypeArray = Array.isArray(farmer_type) ? farmer_type : [];
+      
+      const updateValues = [
+        name, image, age, birthday, phone, email, farm_location, 
+        land_size, farm_owner, income, 
+        farm_ownership_type,
+        JSON.stringify(farmerTypeArray),
+        id
+      ];
+
+      console.log('Farmer Type Array:', farmerTypeArray);
+      console.log('Update Values:', updateValues);
+
+      await connection.query(updateQuery, updateValues);
 
       // Delete existing crops
       await connection.query('DELETE FROM crops WHERE farmer_id = ?', [id]);

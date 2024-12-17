@@ -84,7 +84,16 @@ interface FarmerFormData {
   image?: File | string;
   wetSeasonCrops: string[];
   drySeasonCrops: string[];
+  farm_ownership_type: string;
+  farmer_type: string[];
 }
+
+const farmerTypes = [
+  'Coconut Farmer',
+  'Rice Farmer',
+  'Fruit & Vegetables',
+  'Poultry Farmers'
+];
 
 const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
 
@@ -100,7 +109,9 @@ const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
       land_size: "",
       income: 0,
       wetSeasonCrops: [],
-      drySeasonCrops: []
+      drySeasonCrops: [],
+      farm_ownership_type: "",
+      farmer_type: []
     });
 
     const [imageBlob, setImageBlob] = useState<string | null>(null);
@@ -261,6 +272,15 @@ const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
       }));
     };
   
+    const handleFarmerTypeChange = (type: string) => {
+      setFormData(prev => {
+        const updatedTypes = prev.farmer_type.includes(type)
+          ? prev.farmer_type.filter(t => t !== type)
+          : [...prev.farmer_type, type];
+        return { ...prev, farmer_type: updatedTypes };
+      });
+    };
+  
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
 
@@ -280,7 +300,9 @@ const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
           crops: [
             ...formData.wetSeasonCrops.map(crop => ({ name: crop, season: 'Wet' })),
             ...formData.drySeasonCrops.map(crop => ({ name: crop, season: 'Dry' }))
-          ]
+          ],
+          farmOwnerClassification: formData.farm_ownership_type,
+          farmerType: formData.farmer_type
         };
 
         console.log('Sending data:', formattedData); // Debug log
@@ -611,6 +633,49 @@ const AddFarmerModal: React.FC<AddFarmerModalProps> = ({ onClose }) => {
               </button>
             </span>
           ))}
+        </div>
+      </div>
+
+      {/* Farm Ownership Type & Farmer Type Fields */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+        <div>
+          <RequiredLabel text="Farm Ownership Type" />
+          <select
+            name="farm_ownership_type"
+            value={formData.farm_ownership_type}
+            onChange={handleInputChange}
+            className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+            required
+          >
+            <option value="">Select Ownership Type</option>
+            <option value="Land Owner">Land Owner</option>
+            <option value="Tenant">Tenant</option>
+          </select>
+        </div>
+
+        <div>
+          <RequiredLabel text="Farmer Type" />
+          <div className="space-y-2">
+            {farmerTypes.map((type) => (
+              <div key={type} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`farmer-type-${type}`}
+                  checked={formData.farmer_type.includes(type)}
+                  onChange={(e) => {
+                    const updatedTypes = e.target.checked
+                      ? [...formData.farmer_type, type]
+                      : formData.farmer_type.filter((t) => t !== type);
+                    setFormData({ ...formData, farmer_type: updatedTypes });
+                  }}
+                  className="mr-2"
+                />
+                <label htmlFor={`farmer-type-${type}`} className="text-sm text-gray-700 dark:text-gray-200">
+                  {type}
+                </label>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       </div>

@@ -35,7 +35,16 @@ interface FarmerFormData {
   image?: File | string;
   wetSeasonCrops: string[];
   drySeasonCrops: string[];
+  farm_ownership_type: string;
+  farmer_type: string[];
 }
+
+const farmerTypes = [
+  'Coconut Farmer',
+  'Rice Farmer',
+  'Fruit & Vegetables',
+  'Poultry Farmers'
+];
 
 const SignupPage = () => {
   const router = useRouter();
@@ -51,7 +60,9 @@ const SignupPage = () => {
     land_size: "",
     income: 0,
     wetSeasonCrops: [],
-    drySeasonCrops: []
+    drySeasonCrops: [],
+    farm_ownership_type: "",
+    farmer_type: []
   });
 
   const [imageBlob, setImageBlob] = useState<string | null>(null);
@@ -66,17 +77,17 @@ const SignupPage = () => {
     const birth = new Date(birthDate);
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
       age--;
     }
-    
+
     return age;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     if (name === 'birthday') {
       const age = calculateAge(value);
       setFormData(prev => ({
@@ -131,64 +142,6 @@ const SignupPage = () => {
     }
   };
 
-  const handleCropSelect = (
-    crop: string,
-    season: "wetSeasonCrops" | "drySeasonCrops"
-  ) => {
-    const cropInput = crop.trim().toLowerCase();
-    const existingCrops = formData[season].map(c => c.toLowerCase());
-  
-    if (existingCrops.includes(cropInput)) {
-      toast.error(`${crop} is already added to ${season === 'wetSeasonCrops' ? 'wet' : 'dry'} season crops.`);
-      return;
-    }
-  
-    setFormData((prev) => ({
-      ...prev,
-      [season]: [...prev[season], crop],
-    }));
-  
-    season === "wetSeasonCrops" ? setWetCropInput("") : setDryCropInput("");
-    season === "wetSeasonCrops" ? setWetSuggestions([]) : setDrySuggestions([]);
-  };
-
-  const handleCropInput = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    season: "wetSeasonCrops" | "drySeasonCrops"
-  ) => {
-    const input = e.target.value;
-    if (season === "wetSeasonCrops") {
-      setWetCropInput(input);
-      setWetSuggestions(
-        cropsList.filter((crop) => crop.toLowerCase().includes(input.toLowerCase()))
-      );
-    } else {
-      setDryCropInput(input);
-      setDrySuggestions(
-        cropsList.filter((crop) => crop.toLowerCase().includes(input.toLowerCase()))
-      );
-    }
-  };
-
-  const handleCropInputKeyPress = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    season: "wetSeasonCrops" | "drySeasonCrops"
-  ) => {
-    if (e.key === "Enter" && (season === "wetSeasonCrops" ? wetCropInput : dryCropInput).trim()) {
-      handleCropSelect((season === "wetSeasonCrops" ? wetCropInput : dryCropInput).trim(), season);
-      e.preventDefault();
-    }
-  };
-
-  const handleCropRemove = (
-    crop: string,
-    season: "wetSeasonCrops" | "drySeasonCrops"
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [season]: prev[season].filter((item) => item !== crop),
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,14 +152,15 @@ const SignupPage = () => {
         name: formData.name,
         image: formData.image || '/images/user/default-user.png',
         age: parseInt(formData.age.toString()),
-        birthday: new Date(formData.birthday).toISOString().split('T')[0],
+        birthday: new Date(formData.birthday),
         gender: formData.gender,
         phone: formData.contact_number,
         farm_location: formData.farm_location,
         land_size: formData.land_size,
         farm_owner: formData.farm_owner === 'true',
         income: parseFloat(formData.income.toString()),
-
+        farmOwnerClassification: formData.farm_ownership_type,
+        farmerType: formData.farmer_type
       };
 
       const response = await fetch('/api/farmer/signup', {
@@ -216,7 +170,8 @@ const SignupPage = () => {
         },
         body: JSON.stringify(formattedData),
       });
-
+      console.log(formattedData);
+      console.log(response);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to sign up');
@@ -263,7 +218,7 @@ const SignupPage = () => {
             <div className="mb-6">
               <div className="mt-4 flex justify-center">
                 <div className="relative">
-                  <Image 
+                  <Image
                     src={imageSrc}
                     alt="Farmer Image"
                     width={128}
@@ -315,9 +270,9 @@ const SignupPage = () => {
                   className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black focus:border-primary focus:outline-none dark:border-dark-3 dark:text-white dark:focus:border-primary"
                 >
                   <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="LGBTQ+">LGBTQ+</option>
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
+                  <option value="Other">LGBTQ+</option>
                 </select>
               </div>
             </div>
@@ -387,21 +342,6 @@ const SignupPage = () => {
             {/* Farm Owner & Land Size Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <RequiredLabel text="Farm Owner" />
-                <select
-                  name="farm_owner"
-                  value={formData.farm_owner}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black focus:border-primary focus:outline-none dark:border-dark-3 dark:text-white dark:focus:border-primary"
-                >
-                  <option value="">Select Option</option>
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
-              </div>
-
-              <div>
                 <RequiredLabel text="Land Size" />
                 <div className="flex items-center space-x-2">
                   <input
@@ -433,23 +373,66 @@ const SignupPage = () => {
                   </select>
                 </div>
               </div>
+              <div>
+                <RequiredLabel text="Income" />
+                <input
+                  type="number"
+                  name="income"
+                  value={formData.income}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black focus:border-primary focus:outline-none dark:border-dark-3 dark:text-white dark:focus:border-primary"
+                  placeholder="Enter annual income"
+                />
+              </div>
             </div>
 
-            {/* Income Field */}
-            <div>
-              <RequiredLabel text="Income" />
-              <input
-                type="number"
-                name="income"
-                value={formData.income}
-                onChange={handleInputChange}
-                required
-                className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black focus:border-primary focus:outline-none dark:border-dark-3 dark:text-white dark:focus:border-primary"
-                placeholder="Enter annual income"
-              />
+
+
+
+            {/* Farm Ownership Type & Farmer Type Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <RequiredLabel text="Farm Ownership Type" />
+                <select
+                  name="farm_ownership_type"
+                  value={formData.farm_ownership_type}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black focus:border-primary focus:outline-none dark:border-dark-3 dark:text-white dark:focus:border-primary"
+                  required
+                >
+                  <option value="">Select Ownership Type</option>
+                  <option value="Land Owner">Land Owner</option>
+                  <option value="Tenant">Tenant</option>
+                </select>
+              </div>
+
+              <div>
+                <RequiredLabel text="Farmer Type" />
+                <div className="space-y-2">
+                  {farmerTypes.map((type) => (
+                    <div key={type} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`farmer-type-${type}`}
+                        checked={formData.farmer_type.includes(type)}
+                        onChange={(e) => {
+                          const updatedTypes = e.target.checked
+                            ? [...formData.farmer_type, type]
+                            : formData.farmer_type.filter((t) => t !== type);
+                          setFormData({ ...formData, farmer_type: updatedTypes });
+                        }}
+                        className="mr-2"
+                      />
+                      <label htmlFor={`farmer-type-${type}`} className="text-sm text-black dark:text-white">
+                        {type}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-        
             {/* Submit Button */}
             <div className="mt-8">
               <button

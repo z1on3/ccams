@@ -22,6 +22,7 @@ const publicPaths = [
   '/api/auth/verify',
   '/api/auth/farmer/login',
   '/api/auth/farmer/logout',
+  '/api/farmer/signup',
   '/_next',
   '/images',
   '/favicon.ico'

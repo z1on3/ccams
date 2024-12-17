@@ -10,10 +10,8 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <>
-      <MainLayout>
-        <AidManagement />
-      </MainLayout>
-    </>
+    <MainLayout>
+      <AidManagement />
+    </MainLayout>
   );
 } 

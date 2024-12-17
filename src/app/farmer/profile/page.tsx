@@ -1,4 +1,4 @@
-// app/dashboard/farmer-management/profile/page.tsx
+// app/farmer/profile/page.tsx
 "use client";
 import { Farmer } from "@/types/farmer";
 import FarmerProfile from "@/components/Dashboard/farmer-profile";
