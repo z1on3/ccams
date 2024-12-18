@@ -1,23 +1,7 @@
 -- Add new columns to farmers table if they do not exist
-SET @column_exists = (SELECT COUNT(*) 
-                      FROM information_schema.COLUMNS 
-                      WHERE TABLE_NAME='farmers' 
-                      AND COLUMN_NAME='farm_ownership_type');
-
-IF @column_exists = 0 THEN
-    ALTER TABLE farmers
-    ADD COLUMN farm_ownership_type ENUM('Land Owner', 'Tenant') DEFAULT NULL AFTER farm_owner;
-END IF;
-
-SET @column_exists = (SELECT COUNT(*) 
-                      FROM information_schema.COLUMNS 
-                      WHERE TABLE_NAME='farmers' 
-                      AND COLUMN_NAME='farmer_type');
-
-IF @column_exists = 0 THEN
-    ALTER TABLE farmers
-    ADD COLUMN farmer_type JSON DEFAULT NULL AFTER farm_ownership_type;
-END IF;
+ALTER TABLE farmers
+ADD COLUMN IF NOT EXISTS farm_ownership_type ENUM('Land Owner', 'Tenant') DEFAULT NULL AFTER farm_owner,
+ADD COLUMN IF NOT EXISTS farmer_type JSON DEFAULT NULL AFTER farm_ownership_type;
 
 -- Update existing records to have default values
 UPDATE farmers 
@@ -27,7 +11,7 @@ SET farm_ownership_type = CASE
 END,
 farmer_type = '[]';
 
--- Add indexes for the new columns
+-- Add indexes for the new columns if they do not exist
 ALTER TABLE farmers
-ADD INDEX idx_farm_ownership_type (farm_ownership_type),
-ADD INDEX idx_farmer_type (farmer_type);
+ADD INDEX IF NOT EXISTS idx_farm_ownership_type (farm_ownership_type),
+ADD INDEX IF NOT EXISTS idx_farmer_type (farmer_type);
