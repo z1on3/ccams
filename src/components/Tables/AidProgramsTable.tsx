@@ -5,6 +5,8 @@ import { Plus, ChevronUpIcon, ChevronDownIcon } from 'lucide-react';
 import ButtonDefault from '../Buttons/ButtonDefault';
 import AidProgramForm from '../Forms/AidProgramForm';
 import { useRouter } from 'next/navigation';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface AidProgram {
   id: number;
@@ -38,7 +40,7 @@ const AidProgramsTable = () => {
         throw new Error('Failed to fetch programs');
       }
       const result = await response.json();
-      
+
       // Fetch remaining quantities for each program
       const programsWithRemaining = await Promise.all(
         result.map(async (program: AidProgram) => {
@@ -50,7 +52,7 @@ const AidProgramsTable = () => {
           return program;
         })
       );
-      
+
       setData(programsWithRemaining);
     } catch (error) {
       console.error('Error:', error);
@@ -98,12 +100,36 @@ const AidProgramsTable = () => {
         },
         body: JSON.stringify(body),
       });
+      switch (method) {
+        case "POST":
+          toast.success('Aid Program saved successfully', {
+            position: "bottom-center",
+            autoClose: 400,
+          });
+          break;
+        case "PUT":
+          toast.success('Aid Program updated successfully', {
+            position: "bottom-center",
+            autoClose: 400,
+          });
+          break;
+      
+        default:
+          break;
+      }
 
-      setIsModalOpen(false);
+      setTimeout(() => {
+        setIsModalOpen(false);
+      }, 1000);
+
+      
+      
       setSelectedProgram(null);
       fetchPrograms();
+      
     } catch (error) {
       console.error('Failed to save aid program:', error);
+      
     }
   };
 
@@ -132,13 +158,13 @@ const AidProgramsTable = () => {
 
     const aValue = a[sortField];
     const bValue = b[sortField];
-    
+
     if (typeof aValue === 'string' && typeof bValue === 'string') {
       return sortDirection === 'asc'
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     }
-    
+
     return 0;
   });
 
@@ -165,8 +191,17 @@ const AidProgramsTable = () => {
     </span>
   );
 
+  const parseNumericValue = (value: string): number => {
+    const match = value.match(/[\d,]+/); // Extracts the first numeric part
+    if (!match) return 0;
+
+    return parseFloat(match[0].replace(/,/g, '')) || 0; // Remove commas and convert to number
+  };
+
+
   return (
     <div className="flex flex-col">
+      <ToastContainer />
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-body-2xlg font-bold text-dark dark:text-white">
           Aid Programs List
@@ -200,30 +235,30 @@ const AidProgramsTable = () => {
             <table className="w-full table-auto">
               <thead>
                 <tr className="bg-gray dark:bg-gray-dark">
-                  <th 
+                  <th
                     className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11 cursor-pointer"
                     onClick={() => handleSort('name')}
                   >
                     Program Name <SortIcon field="name" />
                   </th>
-                  <th 
+                  <th
                     className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
                     onClick={() => handleSort('category')}
                   >
                     Category <SortIcon field="category" />
                   </th>
-                  <th 
+                  <th
                     className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
                     onClick={() => handleSort('resource_allocation')}
                   >
                     Quantity/Amount <SortIcon field="resource_allocation" />
                   </th>
-                  <th 
+                  <th
                     className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white"
                   >
                     Remaining
                   </th>
-                  <th 
+                  <th
                     className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer"
                     onClick={() => handleSort('assigned_barangay')}
                   >
@@ -259,14 +294,20 @@ const AidProgramsTable = () => {
                         <div className="flex items-center space-x-2">
                           <ButtonDefault
                             label="View"
+
                             onClick={() => router.push(`/dashboard/aid-management/program/${program.id}`)}
                             customClasses="bg-blue-light text-white dark:bg-blue px-4 py-2 rounded"
                           />
                           <ButtonDefault
                             label="Distribute"
+                            disabled={parseNumericValue(program.remaining as unknown as string) <= 0}
                             onClick={() => router.push(`/dashboard/aid-management/distribute/${program.id}`)}
-                            customClasses="bg-green-light text-white dark:bg-green px-4 py-2 rounded"
+                            customClasses={`px-4 py-2 rounded ${parseNumericValue(program.remaining as unknown as string) <= 0
+                                ? 'bg-gray-400 text-gray-700 cursor-not-allowed' // Disabled state
+                                : 'bg-green-light text-white dark:bg-green' // Enabled state
+                              }`}
                           />
+
                           <ButtonDefault
                             label="Edit"
                             onClick={() => handleEdit(program)}
@@ -309,11 +350,10 @@ const AidProgramsTable = () => {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-1 rounded border ${
-                        currentPage === page
+                      className={`px-3 py-1 rounded border ${currentPage === page
                           ? 'bg-primary text-white'
                           : 'border-gray-300 dark:border-gray-600'
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>

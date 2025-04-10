@@ -179,7 +179,7 @@ const SignupPage = () => {
 
       const data = await response.json();
       toast.success('Registration successful! Please wait for admin approval.');
-      router.push(`/farmer/success?id=${data.farmerId}`);
+      router.push(`/farmer/success?username=${data.farmer_details.username}`);
     } catch (error) {
       console.error('Error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to sign up');
@@ -191,7 +191,7 @@ const SignupPage = () => {
   const imageSrc = imageBlob || formData.image || '/images/user/default-user.png';
 
   return (
-    <div className="min-h-screen bg-gray-2 dark:bg-gray-dark">
+    <div className="min-h-screen">
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         {/* Logo and Header */}
         <div className="text-center mb-8">
@@ -212,7 +212,7 @@ const SignupPage = () => {
         </div>
 
         {/* Registration Form */}
-        <div className="w-full max-w-4xl bg-white dark:bg-boxdark rounded-lg shadow-default p-6 md:p-8">
+        <div className="w-full max-w-4xl bg-white dark:bg-gray-dark rounded-lg shadow-default p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Image Upload */}
             <div className="mb-6">
@@ -401,9 +401,12 @@ const SignupPage = () => {
                   className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black focus:border-primary focus:outline-none dark:border-dark-3 dark:text-white dark:focus:border-primary"
                   required
                 >
-                  <option value="">Select Ownership Type</option>
-                  <option value="Land Owner">Land Owner</option>
-                  <option value="Tenant">Tenant</option>
+                  <option value="" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black focus:border-primary focus:outline-none dark:border-dark-3 dark:text-white dark:focus:border-primary"
+                  >Select Ownership Type</option>
+                  <option value="Land Owner" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black focus:border-primary focus:outline-none dark:border-dark-3 dark:text-white dark:focus:border-primary"
+                  >Land Owner</option>
+                  <option value="Tenant" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black focus:border-primary focus:outline-none dark:border-dark-3 dark:text-white dark:focus:border-primary"
+                  >Tenant</option>
                 </select>
               </div>
 

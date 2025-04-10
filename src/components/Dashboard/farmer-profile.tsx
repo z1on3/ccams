@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Camera, Edit, Pencil, X, Trash2, Calendar, Phone, MapPin, Coins, User, IdCard, Cake, Printer } from "lucide-react";
+import { Camera, Edit, Pencil, X, Trash2, Calendar, Phone, MapPin, Coins, User, IdCard, Cake, Printer, GitPullRequest, HandHelping  } from "lucide-react";
 import { Farmer } from "@/types/farmer";
 import { usePathname } from "next/navigation";
 import AddFarmerModal from "../Modals/AddFarmer";
 import FarmPhotosModal from "../Modals/FarmPhotosModal";
 import { toast } from "react-toastify";
 import EditFarmerModal from "../Modals/EditFarmerModal";
+import AidRequest from "../Modals/AidRequest";
 
 interface FarmerProfileProps {
   farmer: Farmer;
@@ -36,15 +37,31 @@ interface AidReceived {
   farm_location: string;
 }
 
+interface AidRequested {
+  id: number;
+  farmer_id: string;
+  program_name: string;
+  category: string;
+  req_note: string;
+  status: string;
+  distribution_date: string;
+  request_date: string;
+
+}
+
 const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
   const pathname = usePathname();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [isAidRequestModalOpen, setIsAidRequestModalOpen] = useState(false);
+
   const [farmPhotos, setFarmPhotos] = useState<FarmPhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<FarmPhoto | null>(null);
   const [aidReceived, setAidReceived] = useState<AidReceived[]>([]);
+  const [aidRequests, setAidRequests] = useState<AidRequested[]>([]);
   const [isLoadingAid, setIsLoadingAid] = useState(true);
+  const [isLoadingAidReq, setIsLoadingAidReq] = useState(true);
 
   const fetchFarmPhotos = async () => {
     try {
@@ -75,9 +92,25 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
     }
   };
 
+  const fetchAidRequests = async () => {
+    try {
+      const response = await fetch(`/api/aid-requests?farmer_id=${farmer.id}`);
+      if (!response.ok) throw new Error('Failed to fetch aid requests');
+      const data = await response.json();
+      setAidRequests(data || []);
+    } catch (error) {
+      console.error('Error fetching aid requests:', error);
+      toast.error('Failed to load aid requests');
+      setAidRequests([]);
+    } finally {
+      setIsLoadingAidReq(false);
+    }
+  };
+
   useEffect(() => {
     fetchFarmPhotos();
     fetchAidReceived();
+    fetchAidRequests();
   }, [farmer.id]);
 
   const handleDeletePhoto = async (photoId: number) => {
@@ -196,8 +229,8 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
                 gap: 15px;
               }
               .photo {
-                width: 80px;
-                height: 80px;
+                width: 100px;
+                height: 100px;
                 border: 1px solid #000;
               }
               .details {
@@ -233,11 +266,14 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
               <h2>Municipality of San Luis</h2>
             </div>
             <div class="content">
+              <div>
               <img src="${farmer.image || '/images/user/default-user.png'}" class="photo" alt="Farmer Photo">
+              <p style="font-size: 10px;"><strong>ID #:</strong> ${farmer.id}</p>
+              </div>
               <div class="details">
-                <p><strong>ID:</strong> ${farmer.id}</p>
+                <p><strong>Username:</strong> ${farmer.username}</p>
                 <p><strong>Name:</strong> ${farmer.name}</p>
-                <p><strong>Age:</strong> ${farmer.age} years old</p>
+                <p><strong>Birthday:</strong> ${formatDate(farmer.birthday)}</p>
                 <p><strong>Gender:</strong> ${
                   {
                     M: 'Male',
@@ -268,7 +304,9 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
       };
     };
   };
-  console.log(farmer);
+
+  //console.log(farmer);
+
   return (
     <div className="overflow-hidden rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
       <div className="relative z-20 h-35 md:h-65">
@@ -303,7 +341,7 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
         <h4 className="mt-2 text-3xl text-black dark:text-white font-bold">
           {farmer.name}
         </h4>
-        <h6 className="text-lg text-gray-500 dark:text-gray-400">({farmer.age} years old)</h6>
+        <h6 className="text-lg text-gray-500 dark:text-gray-400">({farmer.username})</h6>
         
         {/* Farmer Type Tags */}
         <div className="flex flex-wrap gap-2 mt-3 justify-center">
@@ -343,14 +381,19 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
         </div>
 
         {/* Basic Information */}
-        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6">
           <div className="flex items-center justify-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
+            <Cake className="h-5 w-5 text-primary" />
             <span className="text-sm text-body-light dark:text-body-dark">
               {formatDate(farmer.birthday)} 
             </span>
           </div>
-
+          <div className="flex items-center justify-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            <span className="text-sm text-body-light dark:text-body-dark">
+              {farmer.age} years old
+            </span>
+          </div>
           
           <div className="flex items-center justify-center gap-2">
             <User className="h-5 w-5 text-primary" />
@@ -495,7 +538,63 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
             </div>
           )}
         </div>
-
+        
+        {/* Aid Received Section */}
+        <div className="mt-8">
+          <div className="flex justify-between items-end mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-left">Aid Requests</h2>
+          <button
+            onClick={() => setIsAidRequestModalOpen(true)}
+            className="flex items-center gap-2 rounded bg-primary px-4 py-2 text-white hover:bg-opacity-90"
+          >
+            <HandHelping size={20} />
+            <span>Request Aid</span>
+          </button>
+          </div>
+          {isLoadingAidReq ? (
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (aidRequests && aidRequests.length > 0) ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-800">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Request Note</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aid Program</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Distribution Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Request Date</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                  {aidRequests.map((req) => (
+                    <tr key={req.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-left">{req.category}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-left">{req.req_note}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                      {req.program_name ? req.program_name : "PENDING"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{req.distribution_date ? formatDate(req.distribution_date): "PENDING"}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{formatDate(req.request_date)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          ${req.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                          req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'}`}>
+                          {req.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-center text-gray-500 dark:text-gray-400">No aid requests found</p>
+          )}
+        </div>
 
         {/* Aid Received Section */}
         <div className="mt-8">
@@ -510,16 +609,16 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Program Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ">Category</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Allocation</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Distribution Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                   {aidReceived.map((aid) => (
                     <tr key={aid.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{aid.program_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-left">{aid.program_name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{aid.program_category}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                         {aid.program_category === 'Financial Assistance'
@@ -552,6 +651,14 @@ const FarmerProfile: React.FC<FarmerProfileProps> = ({ farmer }) => {
         <EditFarmerModal
           farmer={farmer}
           onClose={() => setIsEditModalOpen(false)}
+        />
+      )}
+
+      {isAidRequestModalOpen && (
+        <AidRequest
+          farmerID={farmer.id}
+          onSuccess={fetchAidRequests}
+          onClose={() => setIsAidRequestModalOpen(false)}
         />
       )}
 

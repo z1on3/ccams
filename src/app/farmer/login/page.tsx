@@ -30,7 +30,7 @@ export default function FarmerLogin() {
               Farmer Login
             </h4>
             <p className="text-body-color">
-              Sign in using your Farmer ID and Birthday
+              Sign in using your Farmer Username and Birthday
             </p>
           </div>
           <FarmerLoginForm />

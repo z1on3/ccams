@@ -4,6 +4,7 @@ import Link from "next/link";
 interface ButtonPropTypes {
   label: string;
   link?: string;
+  disabled?: boolean;
   customClasses?: string;
   children?: React.ReactNode;
   onClick?: () => void;
@@ -12,6 +13,7 @@ interface ButtonPropTypes {
 const ButtonDefault: React.FC<ButtonPropTypes> = ({
   label,
   link,
+  disabled,
   customClasses = "",
   children,
   onClick,
@@ -32,6 +34,7 @@ const ButtonDefault: React.FC<ButtonPropTypes> = ({
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={`inline-flex items-center justify-center gap-2.5 text-center font-medium hover:bg-opacity-90 ${customClasses}`}
     >
       {children}

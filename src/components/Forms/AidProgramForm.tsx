@@ -20,6 +20,13 @@ const CATEGORIES = [
   "Farm Tools and Equipment",
 ];
 
+const farmerTypes = [
+  'Coconut Farmer',
+  'Rice Farmer',
+  'Fruit & Vegetables',
+  'Poultry Farmers'
+];
+
 const AidProgramForm: React.FC<AidProgramFormProps> = ({
   initialValues,
   onSubmit,
@@ -33,7 +40,16 @@ const AidProgramForm: React.FC<AidProgramFormProps> = ({
       quantity: initialValues?.resource_allocation?.quantity || "",
       budget: initialValues?.resource_allocation?.budget || "",
     },
+    eligibility: {
+      min_income: initialValues?.eligibility?.min_income || "",
+      max_income: initialValues?.eligibility?.max_income || "",
+      min_land_size : initialValues?.eligibility?.min_land_size || "",
+      max_land_size : initialValues?.eligibility?.max_land_size || "",
+      land_ownership_type: initialValues?.eligibility?.land_ownership_type || "",
+      last_updated: initialValues?.eligibility?.last_updated || "",
+    },
     assigned_barangay: initialValues?.assigned_barangay || "",
+    farmer_type: initialValues?.farmer_type || []
   });
 
   const handleInputChange = (
@@ -49,6 +65,18 @@ const AidProgramForm: React.FC<AidProgramFormProps> = ({
           [field]: value,
         },
       }));
+    }
+    else if (name.startsWith("eligibility.")) {
+
+      const field = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        eligibility: {
+          ...prev.eligibility,
+          [field]: value,
+        },
+      }));
+      
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -167,6 +195,136 @@ const AidProgramForm: React.FC<AidProgramFormProps> = ({
                 </option>
               ))}
             </select>
+          </div>
+
+          {/*Eligibility Section*/}
+          <div className="mb-6">
+
+            <h3 className="text-xl font-bold mb-4">Eligibility</h3>
+            {/*Income Section*/}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Minimum Income (PHP)
+                </label>
+                <input
+                  type="number"
+                  name="eligibility.min_income"
+                  value={formData.eligibility.min_income}
+                  onChange={handleInputChange}
+                  placeholder="Minimum Income Eligible (Input 0 if not applicable)"
+                  className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+                />
+              </div>
+              <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                Maximum Income (PHP)
+              </label>
+                <input
+                  type="number"
+                  name="eligibility.max_income"
+                  value={formData.eligibility.max_income}
+                  onChange={handleInputChange}
+                  placeholder="Maximum Income Eligible (Input 0 if not applicable)"
+                  className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+                /></div>
+
+            </div>
+
+            {/*Income Section*/}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Minimum Land Size (Square Meters)
+                </label>
+                <input
+                  type="number"
+                  name="eligibility.min_land_size"
+                  value={formData.eligibility.min_land_size}
+                  onChange={handleInputChange}
+                  placeholder="Minimum Land Size (Square Meters)"
+                  className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+                />
+              </div>
+              <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                Maximum Land Size (Square Meters)
+              </label>
+                <input
+                  type="number"
+                  name="eligibility.max_land_size"
+                  value={formData.eligibility.max_land_size}
+                  onChange={handleInputChange}
+                  placeholder="Maximum Land Size (Square Meters)"
+                  className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+                /></div>
+
+            </div>
+
+            {/*More Eligibility Section*/}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Land Ownership Type
+                </label>
+                <select
+                  name="eligibility.land_ownership_type"
+                  value={formData.eligibility.land_ownership_type}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+                  required
+                >
+                  <option value="Tenant">Tenant</option>
+                  <option value="Land Owner">Land Owner</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Profile Last Updated (This checks if the farmer is active in the system)
+                </label>
+                <input
+                  type="date"
+                  name="eligibility.last_updated"
+                  value={formData.eligibility.last_updated}
+                  onChange={handleInputChange}
+                  placeholder="Profile Last Updated (This checks if the farmer is active in the system)"
+                  className="w-full rounded-lg border border-stroke bg-gray-2 py-3 pl-5 pr-5 text-dark focus:border-primary focus:outline-none dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:focus:border-primary"
+                /></div>
+
+            </div>
+
+
+            {/*Farmer Type*/}
+            <div className="grid grid-cols-1 sm:grid-cols-1 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Farmer Type
+                </label>
+                <div className="space-y-2">
+            {farmerTypes.map((type) => (
+              <div key={type} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`farmer-type-${type}`}
+                  checked={formData.farmer_type.includes(type)}
+                  onChange={(e) => {
+                    const updatedTypes = e.target.checked
+                      ? [...formData.farmer_type, type]
+                      : formData.farmer_type.filter((t: string) => t !== type);
+                    setFormData({ ...formData, farmer_type: updatedTypes });
+                  }}
+                  className="mr-2"
+                />
+                <label htmlFor={`farmer-type-${type}`} className="text-sm text-gray-700 dark:text-gray-200">
+                  {type}
+                </label>
+              </div>
+            ))}
+          </div>
+              </div>
+
+
+            </div>
+
+
           </div>
         </div>
 

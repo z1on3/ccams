@@ -61,7 +61,7 @@ const DataStatsOne = () => {
       color: "#8155FF",
       title: "Total Farmers",
       value: analytics.total_farmers.toLocaleString(),
-      growthRate: analytics.growth_rate,
+
     },
     {
       icon: (<HandCoins color="#ffffff" />),
@@ -73,9 +73,10 @@ const DataStatsOne = () => {
     {
       icon: (<Handshake color="#ffffff" />),
       color: "#18BFFF",
-      title: "Eligible Farmers",
+      title: "Unassisted Farmers",
+      subtitle: "(This month)",
       value: analytics.eligible_farmers.toLocaleString(),
-      growthRate: analytics.growth_rate,
+
     },
     {
       icon: (<LucideSprout color="#fff"/>),
@@ -87,7 +88,7 @@ const DataStatsOne = () => {
       subtitle: analytics.top_crop.name === 'No crops' 
         ? ''
         : `Grown in: ${analytics.top_crop.locations.join(', ')}`,
-      growthRate: analytics.growth_rate,
+
     },
   ];
 
@@ -119,7 +120,8 @@ const DataStatsOne = () => {
                 )}
               </div>
 
-              <span
+              {item.growthRate && (
+                <span
                 className={`flex items-center gap-1.5 text-body-sm font-medium ${
                   item.growthRate > 0 ? "text-green" : "text-red"
                 }`}
@@ -155,6 +157,7 @@ const DataStatsOne = () => {
                   </svg>
                 )}
               </span>
+              )}
             </div>
           </div>
         ))}

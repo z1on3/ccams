@@ -1,5 +1,18 @@
 export const Barangays = [
     {
+      code: "0",
+      name: "All Barangays",
+      oldName: "",
+      subMunicipalityCode: false,
+      cityCode: false,
+      municipalityCode: "0",
+      districtCode: false,
+      provinceCode: "0",
+      regionCode: "0",
+      islandGroupCode: "all",
+      psgc10DigitCode: "0",
+    },
+    {
       code: "037708001",
       name: "Bacong",
       oldName: "",

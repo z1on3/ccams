@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { CheckCircle, Printer } from 'lucide-react';
 
 const SuccessPage = () => {
-  const [farmerId, setFarmerId] = useState<string | null>(null);
+  const [username, setusername] = useState<string | null>(null);
 
   const handlePrint = () => {
-    if (!farmerId) return;
+    if (!username) return;
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -18,7 +18,7 @@ const SuccessPage = () => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Farmer ID Card</title>
+          <title>Farmer Username</title>
           <style>
             @media print {
               body {
@@ -77,8 +77,8 @@ const SuccessPage = () => {
               <h2>Municipality of San Luis</h2>
             </div>
             <div class="content">
-              <p>Your Farmer ID is:</p>
-              <p class="farmer-id">${farmerId}</p>
+              <p>Your Farmer Username is:</p>
+              <p class="farmer-id">${username}</p>
               <p>Please keep this ID for future reference.</p>
             </div>
             <div class="footer">
@@ -102,9 +102,9 @@ const SuccessPage = () => {
   useEffect(() => {
     // Get the farmer ID from the URL query parameters
     const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-    if (id) {
-      setFarmerId(id);
+    const username = params.get('username');
+    if (username) {
+      setusername(username);
     }
   }, []);
 
@@ -127,10 +127,10 @@ const SuccessPage = () => {
           <h1 className="text-2xl font-bold text-black dark:text-white mb-4">
             Registration Successful!
           </h1>
-          {farmerId && (
+          {username && (
             <div className="mb-6">
-              <p className="text-gray-500 dark:text-gray-400 mb-2">Your Farmer ID is:</p>
-              <p className="text-xl font-bold text-primary">{farmerId}</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-2">Your Farmer Username is:</p>
+              <p className="text-xl font-bold text-primary">{username}</p>
               <button
                 onClick={handlePrint}
                 className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue py-2 px-4 text-white transition hover:bg-opacity-90"
@@ -141,7 +141,7 @@ const SuccessPage = () => {
             </div>
           )}
           <p className="text-gray-500 dark:text-gray-400 mb-8">
-            Thank you for registering. Please keep your Farmer ID safe as you will need it to login to your account.
+            Thank you for registering. Please keep your Farmer Username safe as you will need it to login to your account.
           </p>
           <div className="flex justify-center gap-4">
             <Link 

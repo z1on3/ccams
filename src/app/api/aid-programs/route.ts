@@ -11,20 +11,40 @@ interface AidProgram extends RowDataPacket {
     quantity: number;
     budget: number;
   };
+  eligibility: {
+    min_income: number;
+    max_income: number;
+    land_ownership_type: string;
+    last_updated: string;
+  };
   assigned_barangay: string;
+  farmer_type: string[];
 }
 
 export async function GET() {
   try {
     const [rows] = await pool.query<AidProgram[]>('SELECT * FROM aid_programs');
+    // Safe JSON parsing function
+    const safeParse = (data: any, isArray = false) => {
+      try {
+        const parsed = data ? JSON.parse(data) : isArray ? [] : {};
+        return isArray && !Array.isArray(parsed) ? [] : parsed;
+      } catch {
+        return isArray ? [] : {};
+      }
+    };
     
-    // Parse the JSON string in resource_allocation
+
+    // Parse JSON fields safely
     const programs = (rows as AidProgram[]).map(program => ({
       ...program,
-      resource_allocation: typeof program.resource_allocation === 'string' 
-        ? JSON.parse(program.resource_allocation)
-        : program.resource_allocation
+      resource_allocation: safeParse(program.resource_allocation),
+      eligibility: safeParse(program.eligibility),
+      farmer_type: Array.isArray(program.farmer_type)
+        ? program.farmer_type
+        : safeParse(program.farmer_type, true),
     }));
+  
 
     return NextResponse.json(programs);
   } catch (error) {
@@ -39,11 +59,11 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, category, resource_allocation, assigned_barangay } = body;
+    const { name, category, resource_allocation, eligibility, assigned_barangay, farmer_type } = body;
     
     const [result] = await pool.query(
-      'INSERT INTO aid_programs (name, category, resource_allocation, assigned_barangay) VALUES (?, ?, ?, ?)',
-      [name, category, JSON.stringify(resource_allocation), assigned_barangay]
+      'INSERT INTO aid_programs (name, category, resource_allocation, eligibility, assigned_barangay, farmer_type) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, category, JSON.stringify(resource_allocation), JSON.stringify(eligibility), assigned_barangay, JSON.stringify(farmer_type)]
     );
     
     return NextResponse.json(result, { status: 201 });
@@ -59,11 +79,11 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, category, resource_allocation, assigned_barangay } = body;
+    const { id, name, category, resource_allocation, eligibility, assigned_barangay, farmer_type } = body;
     
     await pool.query(
-      'UPDATE aid_programs SET name = ?, category = ?, resource_allocation = ?, assigned_barangay = ? WHERE id = ?',
-      [name, category, JSON.stringify(resource_allocation), assigned_barangay, id]
+      'UPDATE aid_programs SET name = ?, category = ?, resource_allocation = ?, eligibility = ?, assigned_barangay = ?, farmer_type = ? WHERE id = ?',
+      [name, category, JSON.stringify(resource_allocation), JSON.stringify(eligibility), assigned_barangay, JSON.stringify(farmer_type), id]
     );
     
     return NextResponse.json({ message: 'Aid program updated successfully' });

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 
 interface FarmPhotosModalProps {
   farmerId: string;
@@ -84,9 +84,9 @@ const FarmPhotosModal = ({ farmerId, onClose, onPhotosUpdated }: FarmPhotosModal
       }
 
       const result = await response.json();
-      toast.success(`Successfully uploaded ${result.addedCount} photos`);
+      toast.success(`Successfully uploaded ${result.addedCount} photos`, { autoClose: 1000 });
       onPhotosUpdated();
-      onClose();
+      setTimeout(() => onClose(), 1500);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload photos');
@@ -104,6 +104,7 @@ const FarmPhotosModal = ({ farmerId, onClose, onPhotosUpdated }: FarmPhotosModal
 
   return (
     <div className="fixed inset-0 z-999999 flex items-center justify-center bg-black bg-opacity-50">
+      <ToastContainer />
       <div className="w-full max-w-xl rounded-lg bg-white p-6 dark:bg-gray-dark">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-dark dark:text-white">Upload Farm Photos</h2>

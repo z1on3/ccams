@@ -2,6 +2,7 @@ import { Crops } from "./crops";
 
 export interface Farmer {
   id: string;
+  username: string;
   image: string;
   name: string;
   age: number;

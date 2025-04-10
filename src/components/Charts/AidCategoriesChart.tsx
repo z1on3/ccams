@@ -46,15 +46,17 @@ const AidCategoriesChart = () => {
 
     const getPieChartOptions = (): ApexOptions => ({
         chart: {
-            type: 'pie',
+            type: 'donut',
             fontFamily: "Satoshi, sans-serif",
         },
         labels: chartData.map(item => item.category),
-        colors: ['#5750F1', '#5475E5', '#8099EC', '#B4C0F5', '#E6E9FD'],
+        colors: ['#FF5733', '#FFBD33', '#3FD97FE6', '#3380FF', '#C133FF']
+,
+
         legend: {
-            show: true,
-            position: 'bottom',
-            horizontalAlign: 'center',
+            show: false,
+            position: 'top',
+            horizontalAlign: 'left',
             fontSize: '14px',
             markers: {
                 size: 8,
@@ -79,11 +81,29 @@ const AidCategoriesChart = () => {
         },
         plotOptions: {
             pie: {
-                dataLabels: {
-                    offset: -5,
-                    minAngleToShowLabel: 10
-                }
-            }
+                donut: {
+                  size: "100%",
+                  background: "transparent",
+                  labels: {
+                    show: true,
+                    total: {
+                      show: false,
+                      showAlways: true,
+                      label: "Total Programs",
+                      fontSize: "16px",
+                      fontWeight: "400",
+                      formatter: function (w) {
+                        return w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0).toString();
+                      }
+                    },
+                    value: {
+                      show: true,
+                      fontSize: "28px",
+                      fontWeight: "bold",
+                    },
+                  },
+                },
+              },
         },
         dataLabels: {
             enabled: false,
@@ -104,10 +124,29 @@ const AidCategoriesChart = () => {
         tooltip: {
             y: {
                 formatter: function (value) {
-                    return `${value} programs`;
+                    return `${value} ${value === 1 ? 'program' : 'programs'}`;
                 }
             }
         },
+        responsive: [
+            {
+              breakpoint: 2600,
+              options: {
+                chart: {
+                  width: 325,
+                },
+              },
+            },
+            {
+              breakpoint: 640,
+              options: {
+                chart: {
+                  width: 200,
+                },
+              },
+            },
+          ],
+        
     });
 
     const getBarChartOptions = (): ApexOptions => ({
@@ -125,7 +164,7 @@ const AidCategoriesChart = () => {
                 dataLabels: {
                     position: 'top',
                 },
-                barHeight: '70%'
+                barHeight: '60%'
             }
         },
         colors: ['#5750F1'],
@@ -166,7 +205,7 @@ const AidCategoriesChart = () => {
         legend: {
             show: true,
             position: 'bottom',
-            horizontalAlign: 'center',
+            horizontalAlign: 'right',
             fontSize: '14px',
             markers: {
                 width: 8,
@@ -195,12 +234,31 @@ const AidCategoriesChart = () => {
                     show: false
                 }
             }
-        }
+        },
+        responsive: [
+            {
+              breakpoint: 2600,
+              options: {
+                chart: {
+                  width: "100%",
+                  innerHeight: "auto"
+                },
+              },
+            },
+            {
+              breakpoint: 640,
+              options: {
+                chart: {
+                  width: 200,
+                },
+              },
+            },
+          ],
     });
 
     if (isLoading) {
         return (
-            <div className="col-span-12 rounded-[10px] bg-white px-7.5 pb-7 pt-7.5 shadow-1 dark:bg-gray-dark dark:shadow-card xl:col-span-5">
+            <div className="col-span-12 rounded-[10px] bg-white px-7.5 pb-7 pt-7.5 shadow-1 dark:bg-gray-dark dark:shadow-card xl:col-span-7">
                 <div className="flex h-[400px] items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
                 </div>
@@ -209,7 +267,7 @@ const AidCategoriesChart = () => {
     }
 
     return (
-        <div className="col-span-12 rounded-[10px] bg-white px-7.5 pb-7 pt-7.5 shadow-1 dark:bg-gray-dark dark:shadow-card xl:col-span-5">
+        <div className="col-span-12 rounded-[10px] bg-white px-7.5 pb-7 pt-7.5 shadow-1 dark:bg-gray-dark dark:shadow-card xl:col-span-7">
             <div className="mb-4 justify-between gap-4 sm:flex">
                 <div>
                     <h4 className="text-body-2xlg font-bold text-dark dark:text-white">
@@ -250,7 +308,7 @@ const AidCategoriesChart = () => {
                             options={getPieChartOptions()}
                             series={chartData.map(item => item.count)}
                             type="pie"
-                            height={350}
+                            height="450px"
                         />
                     ) : (
                         <ReactApexChart
@@ -260,9 +318,9 @@ const AidCategoriesChart = () => {
                                 data: sortedData.map(item => item.value)
                             }]}
                             type="bar"
-                            height={350}
+                            height="400px"
                             width="100%"
-                            style={{ width: '100%' }}
+                            style={{ height:"400px",width: '100%' }}
                         />
                     )}
                 </div>
@@ -277,7 +335,8 @@ const AidCategoriesChart = () => {
                                 style={{ backgroundColor: getPieChartOptions().colors?.[index % (getPieChartOptions().colors?.length || 1)] }}
                             ></span>
                             <span className="text-sm font-medium text-dark dark:text-white">
-                                {`${item.count} programs`}
+                            {`${item.category}: ${item.count} ${item.count === 1 ? 'program' : 'programs'}`}
+
                             </span>
                         </div>
                     ))}

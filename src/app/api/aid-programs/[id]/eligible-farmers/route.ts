@@ -6,6 +6,14 @@ interface AidProgram extends RowDataPacket {
   id: number;
   category: string;
   assigned_barangay: string;
+  eligibility: {
+    min_income?: number;
+    max_income?: number;
+    min_land_size?: number;
+    max_land_size?: number;
+    land_ownership_type?: string;
+  };
+  farmer_type: string[];
 }
 
 interface Farmer extends RowDataPacket {
@@ -15,7 +23,10 @@ interface Farmer extends RowDataPacket {
   farm_location: string;
   land_size: string;
   income: number;
-  crops: Array<{ name: string; season: string; }>;
+  crops: Array<{ name: string; season: string }>;
+  farm_ownership_type: string;
+  farmer_type: string;
+  active: boolean;
 }
 
 export async function GET(
@@ -26,7 +37,7 @@ export async function GET(
   try {
     connection = await pool.getConnection();
 
-    // First, get the aid program details
+    // Get the aid program details
     const [programs] = await connection.query<AidProgram[]>(
       'SELECT * FROM aid_programs WHERE id = ?',
       [params.id]
@@ -41,11 +52,18 @@ export async function GET(
 
     const program = programs[0];
 
-    // Get all farmers with their crops and check aid allocations in a single query
-    const [farmers] = await connection.query<(Farmer & { 
-      crop_names?: string, 
+    // Parse eligibility criteria
+    const eligibility = program.eligibility
+      ? typeof program.eligibility === 'string'
+        ? JSON.parse(program.eligibility)
+        : program.eligibility
+      : {};
+
+    // Get all farmers with crops and aid allocation status
+    const [farmers] = await connection.query<(Farmer & {
+      crop_names?: string,
       crop_seasons?: string,
-      has_received_aid?: number 
+      has_received_aid?: number
     })[]>(`
       SELECT 
         f.*,
@@ -56,70 +74,115 @@ export async function GET(
       LEFT JOIN crops c ON f.id = c.farmer_id
       LEFT JOIN aid_allocations aa ON f.id = aa.farmer_id AND aa.aid_program_id = ?
       WHERE f.active = true
-      AND f.farm_location = ?
+      AND (? = 'All Barangays' OR f.farm_location = ?)
       GROUP BY f.id
-    `, [params.id, program.assigned_barangay]);
+    `, [params.id, program.assigned_barangay, program.assigned_barangay]);
 
     // Transform the results to match the expected format
     const formattedFarmers = (farmers as any[]).map(farmer => ({
       ...farmer,
       crops: farmer.crop_names
         ? farmer.crop_names.split(',').map((name: string, index: number) => ({
-            name,
-            season: farmer.crop_seasons.split(',')[index]
-          }))
+          name,
+          season: farmer.crop_seasons.split(',')[index]
+        }))
         : []
     }));
 
-    // Add the conversion function
+    // Convert land size to hectares
     const convertToHectares = (size: string): number => {
       const value = parseFloat(size.replace(/[^\d.]/g, '')) || 0;
       const unit = size.toLowerCase();
-      
+
       if (unit.includes('hectare') || unit.includes('ha')) {
-        return value; // already in hectares
+        return value;
       } else if (unit.includes('acre')) {
-        return value * 0.404686; // 1 acre = 0.404686 hectares
+        return value * 0.404686;
       } else if (unit.includes('sqm') || unit.includes('sq m') || unit.includes('m2')) {
-        return value / 10000; // 1 hectare = 10000 sqm
+        return value / 10000;
       } else {
-        return value; // default to original value if unit not recognized
+        return value / 10000;
       }
     };
 
-    // Filter eligible farmers based on program category
+    // Filter eligible farmers based on the full eligibility criteria
     const eligibleFarmers = formattedFarmers.filter(farmer => {
-      // Check if farmer already received this aid
-      const hasReceivedAid = farmer.has_received_aid > 0;
+      console.log('Checking farmer:', farmer.name);
 
-      // Basic eligibility: must be in the assigned barangay and not received aid yet
-      if (hasReceivedAid) return false;
-
-      // Convert land size to hectares for comparison
-      const landSizeInHectares = convertToHectares(farmer.land_size);
-
-      switch (program.category) {
-        case 'Financial Assistance':
-          // Eligible if income is below threshold (e.g., 50,000)
-          return farmer.income <=10000;
-
-        case 'Fertilizer Support':
-        case 'Seed Distribution':
-          // Eligible if has crops and land size is within range (0.5 to 5 hectares)
-          return farmer.crops.length > 0 && landSizeInHectares >= 0.5 && landSizeInHectares <= 5;
-
-        case 'Livestock and Poultry Assistance':
-          // Eligible if income is below threshold and has sufficient land (at least 1 hectare)
-          return farmer.income < 10000 && landSizeInHectares >= 1;
-
-        case 'Farm Tools and Equipment':
-          // Eligible if has active crops
-          return farmer.crops.length > 0;
-
-        default:
-          return true;
+      // Check if farmer is active
+      if (!farmer.active) {
+        console.log('Farmer is not active, skipping');
+        return false;
       }
+
+      // Check if the farmer has already received aid
+      const hasReceivedAid = farmer.has_received_aid > 0;
+      if (hasReceivedAid) {
+        console.log('Farmer has already received aid, skipping');
+        return false;
+      }
+
+      // Convert farmer's land size to hectares
+      const landSizeInHectares = convertToHectares(farmer.land_size);
+      console.log(`Farmer land size in hectares: ${landSizeInHectares}`);
+
+      // Check income eligibility
+      let incomeEligible = true;
+      if (eligibility.min_income && eligibility.min_income !== '0') {
+        incomeEligible = farmer.income >= eligibility.min_income;
+      }
+
+      if (eligibility.max_income && eligibility.max_income !== '0') {
+        incomeEligible = incomeEligible && farmer.income <= eligibility.max_income;
+      }
+
+      console.log(`Income eligibility: ${incomeEligible}`);
+
+      // Check land size eligibility
+      let landSizeEligible = true;
+
+      if (eligibility.min_land_size && eligibility.min_land_size !== '0') {
+        const minLandSizeInHectares = convertToHectares(eligibility.min_land_size);
+        landSizeEligible = landSizeInHectares >= minLandSizeInHectares;
+      }
+
+      if (eligibility.max_land_size && eligibility.max_land_size !== '0') {
+        const maxLandSizeInHectares = convertToHectares(eligibility.max_land_size);
+        landSizeEligible = landSizeEligible && landSizeInHectares <= maxLandSizeInHectares;
+      }
+
+      console.log(`Land size eligibility: ${landSizeEligible}`);
+
+
+      // Check land ownership type eligibility
+      let ownershipEligible = true;
+      if (eligibility.land_ownership_type) {
+        ownershipEligible = farmer.farm_ownership_type === eligibility.land_ownership_type;
+      }
+      console.log(`Land ownership type eligibility: ${ownershipEligible}`);
+
+      // Check farmer type eligibility
+      let farmerTypeEligible = true;
+
+      if (program.farmer_type !== '[]') {
+        const farmerTypes = Array.isArray(farmer.farmer_type)
+          ? farmer.farmer_type
+          : JSON.parse(farmer.farmer_type); // Parse if stored as JSON string
+
+        farmerTypeEligible = farmerTypes.some((type: string) => program.farmer_type.includes(type));
+      }
+
+      console.log(`Farmer type eligibility: ${farmerTypeEligible}`);
+
+      // The farmer is eligible only if all conditions are met
+      const finalEligibility = incomeEligible && landSizeEligible && ownershipEligible && farmerTypeEligible;
+      console.log(`Final eligibility:`, finalEligibility);
+
+      return finalEligibility;
     });
+
+    console.log('Eligible farmers:', eligibleFarmers.map(f => f.name).join(', '));
+
 
     return NextResponse.json(eligibleFarmers);
   } catch (error) {
@@ -133,4 +196,4 @@ export async function GET(
       connection.release();
     }
   }
-} 
+}

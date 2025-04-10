@@ -6,6 +6,7 @@ import { Farmer } from "@/types/farmer";
 import ButtonDefault from "../Buttons/ButtonDefault";
 import { Plus, ChevronUpIcon, ChevronDownIcon } from "lucide-react";
 import AddFarmerModal from "../Modals/AddFarmer";
+import { ToastContainer, toast } from "react-toastify";
 
 const FarmersTable = () => {
   const [data, setData] = useState<Farmer[]>([]);
@@ -159,13 +160,46 @@ const FarmersTable = () => {
     </span>
   );
 
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this Farmer?')) {
+      try {
+        const response = await fetch('/api/farmers', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id }),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to delete Farmer');
+        }
+  
+        console.log('Farmer deleted successfully');
+  
+        // Use functional update to refresh state safely
+        setData(prevData => prevData.filter(farmer => farmer.id !== id));
+        toast.success('Farmer deleted successfully!', {
+          position: "bottom-center",
+          autoClose: 1000,
+        });
+      } catch (error) {
+        console.error('Failed to delete Farmer:', error);
+      }
+    }
+  };
+  
+
   return (
+    
     <div className="flex flex-col">
       <div className="flex items-center justify-between mb-4">
+        
         <h4 className="text-body-2xlg font-bold text-dark dark:text-white">
           Farmers List
         </h4>
         <div className="flex gap-2 2xsm:gap-4">
+        <ToastContainer />
           <ButtonDefault
             label="Add Farmer"
             onClick={openAddFarmerModal}
@@ -313,6 +347,11 @@ const FarmersTable = () => {
                             link={`/dashboard/farmer-management/profile/${farmer.id}`}
                             label="View"
                             customClasses="bg-green-light text-white dark:bg-green px-4 py-2 rounded"
+                          />
+                          <ButtonDefault
+                            label="Delete"
+                            onClick={() => handleDelete(farmer.id)}
+                            customClasses="bg-danger text-white px-4 py-2 rounded bg-red-light dark:bg-red"
                           />
                         </div>
                       </td>

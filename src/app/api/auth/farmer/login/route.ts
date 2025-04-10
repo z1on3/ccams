@@ -18,13 +18,13 @@ const alg = 'HS256';
 export async function POST(request: Request) {
   let connection;
   try {
-    const { farmer_id, birthday } = await request.json();
+    const { username, birthday } = await request.json();
     connection = await pool.getConnection();
 
     // Get farmer from database
     const [farmers] = await connection.query<FarmerRow[]>(
-      'SELECT * FROM farmers WHERE id = ? AND birthday = ? AND active = true',
-      [farmer_id, birthday]
+      'SELECT * FROM farmers WHERE username = ? AND birthday = ? AND active = true',
+      [username, birthday]
     );
 
     const farmer = farmers[0];
